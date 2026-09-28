@@ -7,6 +7,16 @@ body {
   user-select: none;
 }
 
+/* The extra classroom entry must not push the mobile menu off-screen. */
+#main-menu-modal { overflow-y: auto; align-items: flex-start; }
+#main-menu-modal > div { box-sizing: border-box; width: calc(100% - 1rem); margin: 1rem auto; padding: 1.5rem; }
+#main-menu-modal h1 { margin-top: 2rem; font-size: clamp(2.25rem, 11vw, 3.75rem); }
+@media (min-width: 768px) {
+  #main-menu-modal { align-items: center; }
+  #main-menu-modal > div { width: 100%; margin: auto; padding: 3rem; }
+  #main-menu-modal h1 { margin-top: 0; }
+}
+
 /* Classroom view keeps the simulation board visible on small screens. */
 body.challenge-active > .absolute.top-0.left-0,
 body.challenge-active > .absolute.bottom-6 { display: none !important; }

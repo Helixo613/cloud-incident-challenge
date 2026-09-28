@@ -2,7 +2,7 @@
 
 ## Cloud Incident Challenge (classroom)
 
-Open `?challenge=1` on a published copy of this repository, or choose **Cloud Incident Challenge** from the main menu. Each browser tab runs its own simulation; the shared URL needs no account, room code, install, or backend. The guided run has a seven-minute game clock, leaving room for a two-minute introduction and two to three minutes of debrief in a 10–12 minute activity.
+Open the [live Cloud Incident Challenge](https://helixo613.github.io/cloud-incident-challenge/?challenge=1), or choose **Cloud Incident Challenge** from the main menu. Each browser tab runs its own simulation; the shared URL needs no account, room code, install, or backend. The guided run has a seven-minute game clock, leaving room for a two-minute introduction and two to three minutes of debrief in a 10–12 minute activity.
 
 To run locally, serve the repository root with `python3 -m http.server 8000` and open `http://localhost:8000/?challenge=1`. The game is static HTML/CSS/JavaScript; `npm ci` and `npm test` are for contributors only. To publish a fork, push it to GitHub, enable **Settings → Pages → Deploy from a branch → main → /(root)**, then share `https://<your-user>.github.io/<your-repo>/?challenge=1`. Keep `LICENSE` and the original copyright notice in the fork.
 
@@ -20,7 +20,7 @@ Classroom risks: the game fetches Three.js and Tailwind from public CDNs, so tes
 
 Learn cloud by playing:
 
-[![PLAY NOW](https://img.shields.io/badge/PLAY_NOW-Server_Survival-2ea44f?style=for-the-badge)](https://pshenok.github.io/server-survival/)
+[![PLAY NOW](https://img.shields.io/badge/PLAY_NOW-Cloud_Incident_Challenge-2ea44f?style=for-the-badge)](https://helixo613.github.io/cloud-incident-challenge/?challenge=1)
 
 > 🏭 **New: [Datacenter Survival](https://github.com/pshenok/datacenter-survival)** — the sister game. This one teaches the *logical* layer of the cloud; that one teaches the *physical* layer it runs on: power chains, heat, cooling, PUE. [Play it here](https://pshenok.github.io/datacenter-survival/).
 
