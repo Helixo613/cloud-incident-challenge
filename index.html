@@ -838,6 +838,10 @@
           <span id="campaign-progress-label" class="text-xs opacity-75 font-normal">0/25 ★0</span>
         </button>
 
+        <button onclick="openChallenge()" class="w-full bg-sky-700 hover:bg-sky-600 text-white font-bold py-4 px-8 rounded-lg font-mono uppercase text-lg border border-sky-400/50">
+          Cloud Incident Challenge
+        </button>
+
         <!-- Replay the walkthrough (#263). The tutorial now respects its own
              completed flag, so this is the way back in for anyone who wants
              it again — and the way in for a player who skipped it. -->
@@ -1737,6 +1741,44 @@
       </div>
     </div>
   </div>
+  <section id="challenge-intro" class="challenge-modal" hidden aria-labelledby="challenge-intro-title">
+    <div class="challenge-dialog">
+      <p class="challenge-kicker">CLASSROOM ACTIVITY · 10–12 MINUTES</p>
+      <h2 id="challenge-intro-title">Cloud Incident Challenge</h2>
+      <p>Build a route for a small app, handle a traffic spike, then diagnose and restore a failed database. Your team has its own run in this browser tab. No login or room code.</p>
+      <p>Start with a Load Balancer, Compute, and Database. Use the controls to place services, connect them, inspect traffic and Monitoring, and improve capacity. The simulation runs for up to 7 minutes.</p>
+      <button onclick="startChallenge()">Start challenge</button>
+    </div>
+  </section>
+
+  <main id="challenge-shell" hidden aria-label="Cloud Incident Challenge controls">
+    <header class="challenge-top">
+      <div><span class="challenge-kicker">CLOUD INCIDENT CHALLENGE</span><h2 id="challenge-phase">1/3 · Launch</h2></div>
+      <div class="challenge-stats"><span id="challenge-clock">0:00 / 7:00</span><span id="challenge-budget">$250</span></div>
+      <p id="challenge-goal"></p>
+      <p id="challenge-hint"></p>
+    </header>
+    <section class="challenge-controls" aria-label="Game actions">
+      <div class="challenge-readout"><span id="challenge-traffic"></span><span id="challenge-availability"></span></div>
+      <p id="challenge-monitor" hidden aria-live="polite"></p>
+      <div class="challenge-actions">
+        <button id="challenge-add-monitor" onclick="challengeAction('monitor')">Place Monitoring · $75</button>
+        <button id="challenge-add-backup" onclick="challengeAction('backup')">Place backup Compute · $60</button>
+        <button id="challenge-upgrade" onclick="challengeAction('upgrade')">Upgrade Compute · $100</button>
+      </div>
+      <div class="challenge-connect"><label>From <select id="challenge-from"></select></label><label>To <select id="challenge-to"></select></label><button onclick="challengeAction('connect')">Connect →</button></div>
+      <div class="challenge-actions">
+        <button onclick="challengeAction('traffic')">Inspect traffic</button>
+        <button onclick="challengeAction('monitoring')">Inspect Monitoring</button>
+        <button id="challenge-restore" onclick="challengeAction('restore')">Restore Database</button>
+        <button onclick="startChallenge()">Restart</button>
+      </div>
+    </section>
+  </main>
+
+  <section id="challenge-end" class="challenge-modal" hidden aria-labelledby="challenge-end-title">
+    <div class="challenge-dialog"><p class="challenge-kicker">RUN REPORT</p><h2 id="challenge-end-title"></h2><div id="challenge-end-summary"></div><button onclick="startChallenge()">Try again</button></div>
+  </section>
   <script type="module" src="src/main.js"></script>
 </body>
 
