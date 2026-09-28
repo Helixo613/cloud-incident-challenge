@@ -863,6 +863,9 @@ function retryWithSameArchitecture() {
 // the link. The param is stripped from the URL bar either way, so reloads
 // don't re-trigger and saves don't confuse.
 setTimeout(() => {
+    // The ESM graph is also imported by headless tests; their DOM can be
+    // torn down before this deferred browser boot callback runs.
+    if (typeof document === "undefined") return;
     // Achievements (#158) boot wiring — in this deferred block, NOT the
     // module body: game.js's body can run mid-graph through the established
     // import cycles (achievements → circuit-breaker → metrics → events →

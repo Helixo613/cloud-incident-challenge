@@ -1,6 +1,7 @@
 // Cloud Incident Challenge: one local run per browser tab, using the game's
 // existing service, routing, economy, and monitoring simulation.
 import { STATE } from "./state.js";
+import { i18n } from "./i18n.js";
 import { Service } from "./entities/Service.js";
 import { createConnection, createService } from "./sim/topology.js";
 import { getRollingGoodput } from "./core/metrics.js";
@@ -119,18 +120,21 @@ function challengeTick() {
 
 function challengeStop() {
     run.active = false;
+    document.title = i18n.t("title");
     document.body.classList.remove("challenge-active");
     el("challenge-shell")?.setAttribute("hidden", "");
     el("challenge-end")?.setAttribute("hidden", "");
 }
 
 function openChallenge() {
+    document.title = "Cloud Incident Challenge — Server Survival";
     el("main-menu-modal").classList.add("hidden");
     el("challenge-intro").hidden = false;
 }
 
 function startChallenge() {
     resetGame("campaign");
+    document.title = "Cloud Incident Challenge — Server Survival";
     window.campaign?.exit();
     STATE.campaign.currentLevelId = null;
     el("main-menu-modal").classList.add("hidden");
