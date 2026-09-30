@@ -87,10 +87,7 @@ export class I18nManager {
         });
 
         // Update document title
-        document.title = document.body.classList.contains('challenge-active') ||
-            document.getElementById('challenge-intro')?.hidden === false
-            ? 'Cloud Incident Challenge — Server Survival'
-            : this.t('title');
+        document.title = this.t('title');
 
         // Update language select if it exists
         const langSelect = document.getElementById('lang-select');

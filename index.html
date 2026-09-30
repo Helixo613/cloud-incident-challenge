@@ -4,24 +4,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Cloud Incident Challenge — Server Survival</title>
+  <title>Server Survival — learn cloud architecture by playing</title>
   <meta name="description"
-    content="A free, 10–12 minute Cloud and DevOps classroom activity. Build an app, handle a traffic spike, and recover from an incident in your browser." />
+    content="A browser game that teaches real cloud architecture: load balancing, caching, autoscaling, circuit breakers, multi-region failover and GPU inference economics. 25 campaign levels, 11 languages, no install." />
   <meta name="theme-color" content="#050505" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23050505'/%3E%3Crect x='6' y='7' width='20' height='5' rx='1.5' fill='%2300FF85'/%3E%3Crect x='6' y='14' width='20' height='5' rx='1.5' fill='%233b82f6'/%3E%3Crect x='6' y='21' width='20' height='5' rx='1.5' fill='%23f97316'/%3E%3C/svg%3E" />
   <!-- Link previews: a bare URL in a chat or a tweet showed nothing at all,
        which is the whole first impression for a project people arrive at
        through links. -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Cloud Incident Challenge — Server Survival" />
+  <meta property="og:title" content="Server Survival — learn cloud architecture by playing" />
   <meta property="og:description"
-    content="A free classroom activity: launch an app, survive a traffic spike, and restore a failed service. Teams play independent runs from one URL." />
-  <meta property="og:url" content="https://helixo613.github.io/cloud-incident-challenge/?challenge=1" />
+    content="Build a cloud that survives real traffic: caching, autoscaling, circuit breakers, multi-region failover, GPU inference. Free, open source, runs in the browser." />
+  <meta property="og:url" content="https://pshenok.github.io/server-survival/" />
   <meta property="og:image" content="https://raw.githubusercontent.com/pshenok/server-survival/main/assets/gameplay.gif" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Cloud Incident Challenge — Server Survival" />
+  <meta name="twitter:title" content="Server Survival — learn cloud architecture by playing" />
   <meta name="twitter:description"
-    content="A free 10–12 minute Cloud and DevOps classroom activity. No account or installation." />
+    content="Build a cloud that survives real traffic. 25 campaign levels, 11 languages, no install." />
   <meta name="twitter:image" content="https://raw.githubusercontent.com/pshenok/server-survival/main/assets/gameplay.gif" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -836,10 +836,6 @@
           class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 px-8 rounded-lg shadow-lg transform transition hover:scale-105 font-mono uppercase text-lg border border-yellow-400/50 flex justify-between items-center">
           <span data-i18n="campaign_mode">Campaign</span>
           <span id="campaign-progress-label" class="text-xs opacity-75 font-normal">0/25 ★0</span>
-        </button>
-
-        <button onclick="openChallenge()" class="w-full bg-sky-700 hover:bg-sky-600 text-white font-bold py-4 px-8 rounded-lg font-mono uppercase text-lg border border-sky-400/50">
-          Cloud Incident Challenge
         </button>
 
         <!-- Replay the walkthrough (#263). The tutorial now respects its own
@@ -1741,55 +1737,6 @@
       </div>
     </div>
   </div>
-  <section id="challenge-intro" class="challenge-modal" hidden aria-labelledby="challenge-intro-title">
-    <div class="challenge-dialog">
-      <p class="challenge-kicker">CLOUD CREW · 10–12 MINUTE GAME</p>
-      <h2 id="challenge-intro-title">Save the app.</h2>
-      <p>Build a working cloud app, survive a traffic spike, then fix an outage. Clear all three missions before the seven-minute clock ends.</p>
-      <ol class="challenge-intro-missions"><li><b>Launch</b><span>Connect the app.</span></li><li><b>Spike</b><span>Survive the rush.</span></li><li><b>Incident</b><span>Find and fix the failure.</span></li></ol>
-      <p class="challenge-intro-tip">Setup starts paused. Purchases cost money now; the clock and running costs begin when you start traffic.</p>
-      <button onclick="startChallenge()">Enter the network →</button>
-      <p class="challenge-intro-foot">One independent run per browser tab · No login or room code</p>
-    </div>
-  </section>
-
-  <main id="challenge-shell" hidden aria-label="Cloud Incident Challenge controls">
-    <header class="challenge-hud">
-      <div class="challenge-hud-row"><span class="challenge-wordmark">CLOUD <b>CREW</b></span><span id="challenge-clock">PAUSED / 7:00</span><span id="challenge-budget">$250</span></div>
-      <div class="challenge-mission-rail" aria-label="Mission progress"><span>01 LAUNCH</span><span>02 SPIKE</span><span>03 INCIDENT</span></div>
-    </header>
-    <section class="challenge-brief" aria-label="Current mission">
-      <p class="challenge-kicker">MISSION BRIEF · <span id="challenge-step-count">STEP 1 OF 5</span></p>
-      <h2 id="challenge-phase">1/3 · Launch</h2>
-      <p id="challenge-goal"></p>
-      <div class="challenge-next"><span>NEXT MOVE</span><h3 id="challenge-step-title"></h3><p id="challenge-step-detail"></p></div>
-      <p id="challenge-hint" hidden aria-live="polite"></p>
-      <details class="challenge-help"><summary>How to play &amp; why money changes</summary><p>Follow the next move and use the controls below. The 3D board shows Internet → Load Balancer → Compute → Database. A missing link stops requests; Monitoring reveals health and load.</p><p>New services and upgrades have one-time prices. Once live, services charge upkeep and successful requests can earn rewards, so your balance can rise or fall. The game clock and upkeep stay paused during setup.</p></details>
-    </section>
-    <div class="challenge-board-tag" aria-hidden="true"><span>LIVE NETWORK</span><span>● SERVICE MAP</span></div>
-    <section class="challenge-controls" aria-label="Game actions">
-      <div class="challenge-controls-head"><span>FIELD TOOLS</span><span id="challenge-cost-note">SETUP PAUSED · NO UPKEEP</span></div>
-      <div class="challenge-readout"><span id="challenge-traffic"></span><span id="challenge-availability"></span></div>
-      <p id="challenge-monitor" hidden aria-live="polite"></p>
-      <div class="challenge-actions challenge-build-actions">
-        <button id="challenge-add-monitor" data-challenge-focus="monitor" onclick="challengeAction('monitor')">Place Monitoring <small>$75</small></button>
-        <button id="challenge-add-backup" onclick="challengeAction('backup')">Place backup Compute <small>$60</small></button>
-        <button id="challenge-upgrade" data-challenge-focus="upgrade" onclick="challengeAction('upgrade')">Upgrade Compute <small>$100</small></button>
-      </div>
-      <div id="challenge-link-controls" class="challenge-connect" data-challenge-focus="connect"><label>From <select id="challenge-from"></select></label><label>To <select id="challenge-to"></select></label><button onclick="challengeAction('connect')">Connect route →</button></div>
-      <div class="challenge-actions challenge-inspect-actions">
-        <button id="challenge-inspect-traffic" data-challenge-focus="traffic" onclick="challengeAction('traffic')">Inspect traffic</button>
-        <button id="challenge-inspect-monitor" data-challenge-focus="monitoring" onclick="challengeAction('monitoring')">Inspect Monitoring</button>
-        <button id="challenge-restore" data-challenge-focus="restore" onclick="challengeAction('restore')">Restore Database</button>
-        <button id="challenge-launch" data-challenge-focus="launch" onclick="challengeAction('launch')">Start traffic →</button>
-      </div>
-      <button class="challenge-restart" onclick="startChallenge()">↺ Restart mission run</button>
-    </section>
-  </main>
-
-  <section id="challenge-end" class="challenge-modal" hidden aria-labelledby="challenge-end-title">
-    <div class="challenge-dialog"><p class="challenge-kicker">RUN REPORT</p><h2 id="challenge-end-title"></h2><div id="challenge-end-summary"></div><button onclick="startChallenge()">Try again</button></div>
-  </section>
   <script type="module" src="src/main.js"></script>
 </body>
 

@@ -118,7 +118,6 @@ import { applyToolbarGating, renderToolbar } from "./src/ui/toolbar.js";
 // from animate, and the Trophies panel handlers re-exposed on window below.
 import { achievements } from "./src/achievements/achievements.js";
 import { closeTrophies, showTrophies } from "./src/achievements/ui.js";
-import { challengeTick, challengeStop, openChallenge, startChallenge, challengeAction } from "./src/classroom.js";
 
 STATE.sound = new SoundService();
 
@@ -398,7 +397,6 @@ const mouse = new THREE.Vector2();
 const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 function resetGame(mode = "survival") {
-    challengeStop();
     STATE.sound.init();
     STATE.sound.playGameBGM();
     STATE.gameMode = mode;
@@ -863,9 +861,6 @@ function retryWithSameArchitecture() {
 // the link. The param is stripped from the URL bar either way, so reloads
 // don't re-trigger and saves don't confuse.
 setTimeout(() => {
-    // The ESM graph is also imported by headless tests; their DOM can be
-    // torn down before this deferred browser boot callback runs.
-    if (typeof document === "undefined") return;
     // Achievements (#158) boot wiring — in this deferred block, NOT the
     // module body: game.js's body can run mid-graph through the established
     // import cycles (achievements → circuit-breaker → metrics → events →
@@ -1118,7 +1113,6 @@ function animate(time) {
     STATE.lastTime = time;
     STATE.elapsedGameTime += dt;
     if (window.campaign?.active) window.campaign.tick(dt);
-    challengeTick();
 
     // Keyboard panning + orbit. The direction math lives in
     // src/input/handlers.js (panCameraScreen / orbitCamera) so the pan axes
@@ -1781,10 +1775,6 @@ window.onClickContinueGame = onClickContinueGame;
 // #158: the Trophies panel's inline handlers in index.html.
 window.showTrophies = showTrophies;
 window.closeTrophies = closeTrophies;
-window.openChallenge = openChallenge;
-window.startChallenge = startChallenge;
-window.challengeAction = challengeAction;
-if (new URLSearchParams(location.search).has("challenge")) openChallenge();
 
 // #157: the share modal's inline handlers in index.html.
 window.showShareModal = showShareModal;

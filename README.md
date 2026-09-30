@@ -1,26 +1,12 @@
 # Server Survival
 
-## Cloud Incident Challenge (classroom)
-
-Open the [live Cloud Incident Challenge](https://helixo613.github.io/cloud-incident-challenge/?challenge=1), or choose **Cloud Incident Challenge** from the main menu. Each browser tab runs its own simulation; the shared URL needs no account, room code, install, or backend. The guided run has a seven-minute game clock, leaving room for a two-minute introduction and two to three minutes of debrief in a 10–12 minute activity.
-
-To run locally, serve the repository root with `python3 -m http.server 8000` and open `http://localhost:8000/?challenge=1`. The game is static HTML/CSS/JavaScript; `npm ci` and `npm test` are for contributors only. To publish a fork, push it to GitHub, enable **Settings → Pages → Deploy from a branch → main → /(root)**, then share `https://<your-user>.github.io/<your-repo>/?challenge=1`. Keep `LICENSE` and the original copyright notice in the fork.
-
-Facilitator script (two minutes): “You are Cloud Crew, the on-call team for a small app. Its route to the database is broken. Follow the on-screen next move to connect it, place Monitoring, and inspect health. The game starts paused, so take your time during setup. Press **Start traffic** when ready; then a traffic spike will demand more capacity. Finally, use Monitoring to find and restore a failed dependency. Watch availability and budget as you go.” Have teams open the same URL in separate tabs or devices and press **Enter the network** together.
-
-Suggested timing: 0–2 minutes introduction; 2–4 Launch; 4–7 Spike; 7–9 Incident; 9–12 compare run reports and discuss. Ask: Which connection made the app work? What changed in traffic and load during the spike? How did Monitoring distinguish the outage from simple overload? What did recovery cost in availability and budget? Would a backup database change the outcome?
-
-Concept mapping: Load Balancer, Compute, and Database represent traffic distribution, application capacity, and managed data services. Monitoring shows load, failures, and recent goodput. Availability is successful requests divided by all attempted requests. Upgrading or adding Compute illustrates capacity planning under a fixed starting budget. Diagnosing an offline Database, restoring it, and verifying successful reads model incident detection, response, and recovery. The service costs and traffic are intentionally simplified, so treat the numbers as comparative signals, not cloud-provider estimates.
-
-Classroom risks: the game fetches Three.js and Tailwind from public CDNs, so test the room network before class. The activity is currently English-only. On a slow device, 3D rendering can reduce frame rate; the simulation caps frame time, so the seven-minute game clock may run slower than wall time. Buying services reduces the budget immediately; after traffic begins, service upkeep costs money while successful requests can earn rewards. Delayed teams can finish with low availability or a negative budget, and the end screen reports that outcome. Use the visible **Restart mission run** control for a fresh local run.
-
 ![Gameplay Demo](assets/gameplay.gif)
 
 **Server Survival** is an interactive 3D simulation game where you play as a **Cloud Architect**. Your mission is to build and scale a resilient cloud infrastructure to handle increasing traffic loads while fighting off DDoS attacks, managing your budget, and keeping your services healthy.
 
 Learn cloud by playing:
 
-[![PLAY NOW](https://img.shields.io/badge/PLAY_NOW-Cloud_Incident_Challenge-2ea44f?style=for-the-badge)](https://helixo613.github.io/cloud-incident-challenge/?challenge=1)
+[![PLAY NOW](https://img.shields.io/badge/PLAY_NOW-Server_Survival-2ea44f?style=for-the-badge)](https://pshenok.github.io/server-survival/)
 
 > 🏭 **New: [Datacenter Survival](https://github.com/pshenok/datacenter-survival)** — the sister game. This one teaches the *logical* layer of the cloud; that one teaches the *physical* layer it runs on: power chains, heat, cooling, PUE. [Play it here](https://pshenok.github.io/datacenter-survival/).
 
