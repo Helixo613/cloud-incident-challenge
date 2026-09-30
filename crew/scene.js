@@ -2,15 +2,15 @@
 import { CONFIG as C } from "./config.js";
 
 const NS = "http://www.w3.org/2000/svg";
-const U = 42, KX = U * 0.866, KY = U / 2, OX = 180, OY = 118, VW = 360, VH = 392;
-const VIEW = `0 0 ${VW} ${VH}`;
+const U = 42, KX = U * 0.866, KY = U / 2, OX = 182, OY = 118, VW = 360, VH = 388, VT = -18;   // VT: headroom so enlarged flags never clip
+const VIEW = `0 ${VT} ${VW} ${VH}`;
 const P = (gx, gy) => [OX + (gx - gy) * KX, OY + (gx + gy) * KY];
 
 // Grid layout. Traffic enters on the left (users → firewall → balancer), fans out to four app
 // slots, meets at hub J, then reaches the data tier (cache · database · replica).
 const USERS = [-1.8, 1.8], FW = [-1.8, 0], LB = [0, 0];
-const APPS = [[1.25, 4.55], [2.35, 3.45], [3.45, 2.35], [4.55, 1.25]];
-const J = [4.55, 4.55], CACHE = [4.55, 6.85], DB = [5.7, 5.7], REPLICA = [6.85, 4.55];
+const APPS = [[1.05, 4.15], [2.15, 3.05], [3.25, 1.95], [4.35, 0.85]];
+const J = [4.35, 4.35], CACHE = [4.35, 6.35], DB = [5.35, 5.35], REPLICA = [6.35, 4.35];
 const NODES = [
   ["users", "users", ...USERS], ["firewall", "firewall", ...FW], ["lb", "lb", ...LB],
   ...APPS.map(([x, y], i) => ["app", `app${i}`, x, y]),
@@ -21,9 +21,9 @@ const NAME = { users: "USERS", firewall: "FIREWALL", lb: "BALANCER", cache: "CAC
 const LABEL = { users: "Users", firewall: "Firewall", lb: "Load balancer", app: "App server", cache: "Cache", db: "Database", replica: "Replica" };
 const REASON_TEXT = { "app-overload": "timeout", "bad-deploy": "HTTP 500", "db-down": "no DB", "db-overload": "DB slow", "rate-limit": "throttled", attack: "bot traffic" };
 // Tap area per kind (viewBox units): half width, and how far below the anchor it reaches.
-const HIT_W = { users: 32.5, firewall: 32.5, lb: 32.5, app: 36, cache: 38, db: 38, replica: 38 };
+const HIT_W = { users: 36, firewall: 36, lb: 36, app: 39, cache: 38, db: 38, replica: 38 };
 // Flag nudges and max widths (viewBox units) so neighbouring flags never touch.
-const FLAG_DX = { lb: 16, cache: -8, replica: 8 };
+const FLAG_DX = { users: -24, lb: 28, cache: -30, replica: 16 };
 const FLAG_MAX = { users: 96, firewall: 96, lb: 110, app: 76, cache: 80, db: 92, replica: 80 };
 
 // Cables as grid-aligned polylines (grid coords). Shared stretches start at equal distances so dashes line up.
@@ -97,7 +97,7 @@ const SHAPES = {
     return { svg: b.svg + fork + ports, top: b.top, bottom: b.bottom, pad: 19 };
   },
   app(x, y) {
-    const a = 17, h = 42, b = box(x, y, a, a, h);
+    const a = 17, h = 38, b = box(x, y, a, a, h);
     const rows = [0, 1, 2, 3, 4];
     const left = onLeft(b.L, rows.map((i) => `<rect class="slit" x="4" y="${-h + 6 + i * 7.4}" width="${2 * a - 13}" height="2.4" rx=".8"/><circle class="led" cx="${2 * a - 4.5}" cy="${-h + 7.2 + i * 7.4}" r="1.5"/>`).join(""));
     const right = onRight(b.F, rows.map((i) => `<rect class="vent" x="5" y="${-h + 6 + i * 7.4}" width="${2 * a - 10}" height="1.6"/>`).join(""));
@@ -133,7 +133,7 @@ function flagState(kind, s, ctx) {
 }
 
 export function createScene(svg, { onTap }) {
-  let nodes = {}, flags = {}, glows = {}, links = {}, fxG, owned = {};
+  let nodes = {}, flags = {}, glows = {}, links = {}, fxG, owned = {}, K = 1;
 
   function setOff(key, off) {
     const g = nodes[key];
@@ -155,7 +155,7 @@ export function createScene(svg, { onTap }) {
     svg.replaceChildren();
     const grid = mk("g", { class: "grid", mask: "url(#crewFade)" }), floor = mk("g"), cables = mk("g"), objs = mk("g"), flagG = mk("g", { class: "flags" });
     fxG = mk("g", { class: "fx" });
-    svg.append(mk("defs", {}, `<radialGradient id="crewFadeG" cx="50%" cy="48%" r="58%"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><mask id="crewFade"><rect width="${VW}" height="${VH}" fill="url(#crewFadeG)"/></mask>`), grid, floor, cables, objs, flagG, fxG);
+    svg.append(mk("defs", {}, `<radialGradient id="crewFadeG" cx="50%" cy="48%" r="58%"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><mask id="crewFade"><rect y="${VT}" width="${VW}" height="${VH}" fill="url(#crewFadeG)"/></mask>`), grid, floor, cables, objs, flagG, fxG);
     let d = "";
     for (let i = -8; i <= 12; i++) d += `M${pts(P(i, -8))} L${pts(P(i, 12))} M${pts(P(-8, i))} L${pts(P(12, i))} `;
     grid.append(mk("path", { d }));
@@ -196,9 +196,14 @@ export function createScene(svg, { onTap }) {
   }
 
   // Lay out one flag: name (+ number with Monitoring) on line 1, status word on line 2.
-  function drawFlag(f, [word, level, num]) {
-    const n = owned.monitoring ? num : "";
-    const sig = `${word}|${level}|${n}`;
+  function drawFlag(f, state) {
+    f.state = state;
+    let [word, level, num] = state;
+    let n = owned.monitoring ? num : "";
+    // Tight screens: app flags are 50 px apart, so they drop to a short word (name over "OK 61%").
+    if (f.kind === "app" && K > 1.1) word = { BUSY: "BSY", OVERLOADED: "MAX", ERRORS: "ERR" }[word] || word;
+    if (K > 1.1 && n && word.length + n.length < 11) { word += ` ${n}`; n = ""; }   // compact: one short second line
+    const sig = `${word}|${level}|${n}|${K}`;
     if (sig === f.last) return;
     f.last = sig;
     const [bg, notch, nm, nu, st, strip] = f.g.children;
@@ -211,10 +216,13 @@ export function createScene(svg, { onTap }) {
       el.setAttribute("textLength", f1(max)); el.setAttribute("lengthAdjust", "spacingAndGlyphs");
       return max;
     };
-    const inner = FLAG_MAX[f.kind] - 13;
+    const inner = (f.kind === "app" && K > 1.1 ? 60 : FLAG_MAX[f.kind]) - 13;
     const nuL = n ? fit(nu, n.length * 6.4, inner) + 8 : 0;
     const w = Math.round(Math.max(fit(nm, f.name.length * 6, inner - nuL) + nuL, fit(st, word.length * 6.2, inner)) + 13);
-    const x = Math.max(3, Math.min(VW - 3 - w, f.x + f.dx - w / 2)), y = f.top - 34;
+    // Flags are drawn at K x size around their notch tip so text stays legible when the scene is scaled down.
+    const left = Math.max(3, Math.min(VW - 3 - w * K, f.x + (f.dx - w / 2) * K));
+    const x = f.x + (left - f.x) / K, y = f.top - 34;
+    f.g.setAttribute("transform", K === 1 ? "" : `translate(${f1(f.x)} ${f1(y + 30)}) scale(${K}) translate(${f1(-f.x)} ${f1(-y - 30)})`);
     f.g.dataset.level = level;
     bg.setAttribute("x", f1(x)); bg.setAttribute("y", f1(y)); bg.setAttribute("width", w);
     notch.setAttribute("d", `M${f1(f.x - 4)} ${f1(y + 26)} L${f1(f.x)} ${f1(y + 30)} L${f1(f.x + 4)} ${f1(y + 26)}Z`);
@@ -224,6 +232,18 @@ export function createScene(svg, { onTap }) {
     strip.setAttribute("x", f1(x + 1)); strip.setAttribute("y", f1(y + 24)); strip.setAttribute("width", w - 2);
     nodes[f.key].setAttribute("aria-label", `${LABEL[f.kind]}: ${word.toLowerCase()}`);
   }
+
+  // Text target is ~9.2 px on screen: scale flags up by 1/scene-scale (max 1.9x) when the scene is small.
+  function fit() {
+    const r = svg.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const s = Math.min(r.width / VW, r.height / VH);
+    const k = Math.round(Math.max(1, Math.min(1.9, 9.2 / (9 * s))) * 20) / 20;
+    if (k === K) return;
+    K = k;
+    for (const [key, f] of Object.entries(flags)) if (f.state && !nodes[key].classList.contains("off")) drawFlag(f, f.state);
+  }
+  if (typeof ResizeObserver === "function") new ResizeObserver(fit).observe(svg);
 
   function burst(key, text) {
     const g = nodes[key];

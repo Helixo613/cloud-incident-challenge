@@ -62,9 +62,10 @@ export function renderPrep(shift) {
 
 export function renderLive(round, diagnosing = false) {
   const sheet = $("#sheet");
+  const body = $("#sheet-body"), foot = $("#sheet-foot");
+  if (sheet.dataset.phase !== "live" || diagnosing) body.scrollTop = 0;   // don't inherit the prep list's scroll
   sheet.dataset.phase = "live";
   sheet.dataset.incident = round.id;
-  const body = $("#sheet-body"), foot = $("#sheet-foot");
   if (diagnosing) {
     $("#sheet-title").textContent = "Diagnose · what is the root cause?";
     body.className = "";
