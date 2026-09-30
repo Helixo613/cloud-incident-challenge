@@ -1,3 +1,15 @@
+# Cloud Crew: On-Call (classroom game)
+
+A phone-first 2D game set in an isometric datacenter where you keep a small cloud app alive through five incidents: spend a budget, read the status flags, diagnose the cause, pick a fix. Owning Monitoring adds the numbers (load, hit rate, requests) to each flag. **Play:** open [`crew/`](crew/) (published at `https://helixo613.github.io/cloud-incident-challenge/crew/`). One shift is about 10 minutes; each browser tab is an independent run. Add `?seed=abc` so a whole class plays the same shift and compares grades. No accounts, no backend, no CDN, works offline once loaded.
+
+Facilitator (2 min): "You're the on-call engineer for a small app. Each round something breaks — tap the services to see what they report, name the cause, then choose a fix. Wrong fixes cost you money and uptime. Compare grades at the end." Debrief questions: Which incident looked like overload but wasn't? What did Monitoring change? Which prep purchase paid off? What would a replica or firewall have prevented?
+
+Run locally: `python3 -m http.server 8000 --bind 127.0.0.1`, open `http://localhost:8000/crew/`. Contributors: `npm ci && npm run check`.
+
+The original 3D **Server Survival** game (below) remains at the repo root.
+
+---
+
 # Server Survival
 
 ![Gameplay Demo](assets/gameplay.gif)
