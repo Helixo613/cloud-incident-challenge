@@ -9,7 +9,7 @@ export function showScreen(name) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("is-active", s.id === `screen-${name}`));
 }
 
-export function renderHud({ budget, avail, label, monitoring }) {
+export function renderHud({ budget, avail, label, monitoring, left, total }) {
   $("#hud-mon").hidden = !monitoring;
   const b = $("#hud-budget");
   b.textContent = money(budget);
@@ -19,6 +19,12 @@ export function renderHud({ budget, avail, label, monitoring }) {
   m.style.width = `${Math.round(avail * 100)}%`;
   m.dataset.level = avail >= 0.95 ? "ok" : avail >= 0.6 ? "warn" : "bad";
   $("#hud-round").textContent = label;
+  $("#hud-time").textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  const pct = Math.round((left / total) * 100);
+  $("#hud-bar").setAttribute("aria-valuenow", pct);
+  const bar = $("#hud-bar i");
+  bar.style.width = `${pct}%`;
+  bar.dataset.level = pct > 60 ? "ok" : pct > 35 ? "yellow" : pct > 15 ? "orange" : "red";
 }
 
 export function setMenu(open) { $("#menu").hidden = !open; }

@@ -57,7 +57,10 @@ export function clueFor(kind, s, m) {
       return { lines: [`APP: CPU ${pct(a)}`, s.deployBad ? "≈50% of responses are HTTP 500 since the last release" : a >= 1 ? "CPU saturated, requests queueing" : "Error rate normal"], gauge: { label: "CPU", value: a } };
     }
     case "db": {
-      if (s.dbDown) return { lines: m ? ["DATABASE: OFFLINE, connection refused", "Writes are failing"] : ["DATABASE: not responding"], gauge: null };
+      if (s.dbDown) {
+        if (s.dbTotal > 0) return { lines: [m ? `DATABASE: Restarting — back in ${s.dbLeft} s` : "DATABASE: Restarting…"], gauge: null };
+        return { lines: m ? ["DATABASE: OFFLINE, connection refused", "Writes are failing"] : ["DATABASE: not responding"], gauge: null };
+      }
       const d = s.dbLoad;
       if (!m) return { lines: [d >= 1 ? "DATABASE: overwhelmed by queries" : d >= 0.7 ? "DATABASE: busy" : "DATABASE: healthy"], gauge: null };
       return { lines: [`DATABASE: load ${pct(d)}`, s.hit < 0.3 ? "Almost no cache hits, every read reaches the database" : "The cache absorbs most reads"], gauge: { label: "DB load", value: d } };
@@ -77,6 +80,7 @@ export function tickerLine(s, m, id) {
   if (!m) return s.avail >= 0.95 ? "Support: no complaints" : s.avail >= 0.6 ? "Support: users report slow pages and errors" : "Support: users report the site is down";
   if (s.avail >= 0.95) return "LOG: all systems nominal";
   if (id === "bad-deploy") return "LOG: release v2.4.1 deployed · error rate 50%";
+  if (s.dbDown && s.dbTotal > 0) return `LOG: db-primary restarting, ${s.dbLeft} s`;
   if (id === "db-crash") return "LOG: db-primary connection refused";
   if (id === "cache-flush") return `LOG: cache hit rate ${pct(s.hit)}`;
   if (id === "bot-flood") return `LOG: ${Math.round(s.badIn)} req/s from 3 IP addresses`;

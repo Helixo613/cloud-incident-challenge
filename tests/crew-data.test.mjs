@@ -30,6 +30,10 @@ describe("incident data", () => {
     // Without Monitoring the cache clue must not name the cause.
     const noMon = clueFor("cache", snap, false).lines.join(" ");
     expect(noMon).not.toMatch(/cold|hit rate|collapsed/i);
+    const rs = { ...snap, dbDown: true, dbLeft: 14, dbTotal: 20 };
+    expect(clueFor("db", rs, true).lines.join(" ")).toMatch(/14 s/);
+    expect(clueFor("db", rs, false).lines.join(" ")).not.toMatch(/\d/);
+    expect(tickerLine(rs, true, "db-crash")).toMatch(/restarting, 14 s/);
     expect(tickerLine({ ...snap, onset: false }, false, "spike")).toBeTypeOf("string");
     expect(tickerLine(snap, true, "spike")).toBeTypeOf("string");
   });

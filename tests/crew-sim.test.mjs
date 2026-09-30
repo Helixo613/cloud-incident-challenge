@@ -230,4 +230,22 @@ describe("fair stars and stage reward", () => {
     expect(res.why).toEqual({ avail: Math.round(res.avg * 100), fast: null, diag: "none" });
     expect(res.why.avail).toBeLessThan(90);
   });
+  it("exposes DB restart progress (dbLeft counts down, dbTotal is the duration)", () => {
+    const shift = newShift("t"); shift.order[2] = "db-crash"; shift.round = 2;
+    const r = startRound(shift);
+    while (!r.onset) tick(r, shift);
+    expect(preview(r)).toMatchObject({ dbDown: true, dbLeft: 0, dbTotal: 0 });   // crash: no scheduled recovery
+    act(r, shift, "restart");
+    expect(preview(r)).toMatchObject({ dbLeft: C.restartSeconds, dbTotal: C.restartSeconds });
+    let prev = C.restartSeconds;
+    while (r.flags.dbDown) { const s = tick(r, shift); if (s.dbDown) { expect(s.dbLeft).toBe(prev - 1); prev = s.dbLeft; } }
+    expect(tick(r, shift)).toMatchObject({ dbLeft: 0, dbTotal: 0 });
+  });
+  it("failover reports its own short total", () => {
+    const shift = newShift("t"); shift.order[2] = "db-crash"; shift.round = 2; shift.owned.replica = 1;
+    const r = startRound(shift);
+    while (!r.onset) tick(r, shift);
+    act(r, shift, "failover");
+    expect(preview(r)).toMatchObject({ dbLeft: C.failoverSeconds, dbTotal: C.failoverSeconds });
+  });
 });

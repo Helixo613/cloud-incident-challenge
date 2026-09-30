@@ -23,7 +23,7 @@ await p.click("[data-go=ready]");
 await p.waitForSelector("#banner:not([hidden])", { timeout: 30000 });
 await reach("live");
 // pause: open menu, clock must not advance
-const clock = async () => p.textContent("#hud-round");
+const clock = async () => p.textContent("#hud-time");
 await p.click("[data-nav=menu]");
 const c0 = await clock(); await p.waitForTimeout(2500);
 if (c0 !== (await clock())) bad.push("sim ticked while menu open");

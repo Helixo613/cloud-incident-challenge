@@ -65,14 +65,15 @@ const onLeft = ([x, y], s) => `<g transform="matrix(.866 .5 0 1 ${f1(x)} ${f1(y)
 const onRight = ([x, y], s) => `<g transform="matrix(.866 -.5 0 1 ${f1(x)} ${f1(y)})">${s}</g>`;
 const diamond = (cx, cy, s) => pts([cx, cy - s], [cx + 1.732 * s, cy], [cx, cy + s], [cx - 1.732 * s, cy]);
 
-function drum(cx, cy, rx, h) {
+function drum(cx, cy, rx, h, fill) {
   const ry = rx / 2, t = cy - h;
   const band = (y) => `<path class="band" d="M${f1(cx - rx)} ${f1(y)}a${rx} ${ry} 0 0 0 ${2 * rx} 0"/>`;
   return {
     svg: `<path class="l" d="M${f1(cx - rx)} ${f1(t)}v${h}a${rx} ${ry} 0 0 0 ${rx} ${ry}v${-h}a${rx} ${ry} 0 0 1 ${-rx} ${-ry}z"/>` +
       `<path class="r" d="M${f1(cx)} ${f1(t + ry)}v${h}a${rx} ${ry} 0 0 0 ${rx} ${-ry}v${-h}a${rx} ${ry} 0 0 1 ${-rx} ${ry}z"/>` +
       band(t + h * 0.36) + band(t + h * 0.7) + `<ellipse class="t" cx="${f1(cx)}" cy="${f1(t)}" rx="${rx}" ry="${ry}"/>` +
-      `<ellipse class="rim" cx="${f1(cx)}" cy="${f1(t)}" rx="${rx * 0.62}" ry="${ry * 0.62}"/>`,
+      `<ellipse class="rim" cx="${f1(cx)}" cy="${f1(t)}" rx="${rx * 0.62}" ry="${ry * 0.62}"/>` +
+      (fill ? `<clipPath id="dbClip"><rect x="${f1(cx - rx)}" y="${f1(t)}" width="${2 * rx}" height="${h}"/><ellipse cx="${f1(cx)}" cy="${f1(t)}" rx="${rx}" ry="${ry}"/><ellipse cx="${f1(cx)}" cy="${f1(t + h)}" rx="${rx}" ry="${ry}"/></clipPath><rect class="rfill" clip-path="url(#dbClip)" x="${f1(cx - rx)}" y="${f1(t + h + ry)}" width="${2 * rx}" height="0" data-y0="${f1(t + h + ry)}" data-h="${f1(h + 2 * ry)}"/>` : ""),
     top: t - ry, bottom: cy + ry,
   };
 }
@@ -111,7 +112,7 @@ const SHAPES = {
     const rows = onLeft(b.L, [0, 1].map((i) => `<rect class="slit" x="4" y="${-14 + i * 6}" width="21" height="2.2" rx=".8"/>`).join(""));
     return { svg: b.svg + bolt + rows, top: b.top, bottom: b.bottom, pad: 17 };
   },
-  db(x, y) { return { ...drum(x, y, 25, 30), pad: 17 }; },
+  db(x, y) { return { ...drum(x, y, 25, 30, true), pad: 17 }; },
   replica(x, y) { return { ...drum(x, y, 22, 26), pad: 15 }; },
 };
 
@@ -128,7 +129,7 @@ function flagState(kind, s, ctx) {
     case "lb": return [...(s.rateLimit ? ["LIMITING", "warn"] : ["OK", "ok"]), `${Math.round(s.incoming)}/s`];
     case "app": return [...(ctx.m && s.deployBad ? ["ERRORS", "bad"] : load(s.appLoad)), pct(s.appLoad)];
     case "cache": return [...(s.hit < 0.1 ? [ctx.m ? "COLD" : "OVERLOADED", "bad"] : s.hit < 0.5 ? [ctx.m ? "WARMING" : "BUSY", "warn"] : ["OK", "ok"]), pct(s.hit)];
-    case "db": return s.dbDown ? ["OFFLINE", "bad", "—"] : [...load(s.dbLoad ?? 0), pct(s.dbLoad ?? 0)];
+    case "db": return s.dbDown ? (s.dbTotal > 0 ? [ctx.m ? `RESTART ${s.dbLeft}s` : "RESTARTING", "warn", ""] : ["OFFLINE", "bad", "—"]) : [...load(s.dbLoad ?? 0), pct(s.dbLoad ?? 0)];
     case "replica": return !s.replica ? ["PROMOTED", "info", ""] : s.dbDown ? ["ACTIVE", "warn", ""] : ["STANDBY", "info", ""];
     default: return ["OK", "ok", ""];
   }
@@ -268,6 +269,12 @@ export function createScene(svg, { onTap }) {
       replica: "happy",
     };
     applyServers(snap.servers);
+    const rf = nodes.db && nodes.db.querySelector(".rfill");
+    if (rf) {   // restart fill rises through the drum, amber to green
+      const p = snap.dbTotal > 0 ? Math.min(1, Math.max(0, 1 - snap.dbLeft / snap.dbTotal)) : 0, y0 = +rf.dataset.y0, h = +rf.dataset.h * p;
+      rf.setAttribute("y", f1(y0 - h)); rf.setAttribute("height", f1(h));
+      rf.style.fill = `hsl(${Math.round(38 + 100 * p)} 85% 55%)`;
+    }
     const ctx = { m: !!owned.monitoring };
     for (const [key, g] of Object.entries(nodes)) {
       const kind = g.dataset.kind, m = kind === "app" ? load(snap.appLoad) : mood[kind];

@@ -38,7 +38,7 @@ export function startRound(shift) {
     baseServers: o.app,
     extra: [],                                     // ready-times of temporary servers
     has: { replica: o.replica > 0, monitoring: o.monitoring > 0, firewall: o.firewall > 0 },
-    flags: { deployBad: false, rollbackAt: null, dbDown: false, dbBackAt: null, cacheCold: false, warmFrom: null, rateLimit: false, block: false },
+    flags: { deployBad: false, rollbackAt: null, dbDown: false, dbBackAt: null, dbTotal: 0, cacheCold: false, warmFrom: null, rateLimit: false, block: false },
     stable: 0, mitigatedAt: null, availSum: 0, availN: 0, minAvail: 1,
     seq: 0, diagnosis: null, diagSeq: null, firstFixSeq: null,
     earned: 0, spent: 0, snap: null, log: [],
@@ -100,7 +100,7 @@ function step(r, t) {
     served,
     snap: {
       t, onset: r.onset, servers, good, incoming, appCap, appLoad: admitted / appCap,
-      dbLoad: f.dbDown ? null : dbDemand / C.dbCap, dbDown: f.dbDown, hit, avail, served,
+      dbLoad: f.dbDown ? null : dbDemand / C.dbCap, dbDown: f.dbDown, dbLeft: f.dbDown && f.dbBackAt != null ? Math.max(0, Math.ceil(f.dbBackAt - t)) : 0, dbTotal: f.dbDown && f.dbBackAt != null ? f.dbTotal : 0, hit, avail, served,
       reasons, top: top(reasons), deployBad: f.deployBad, rateLimit: f.rateLimit, block: f.block, badIn, replica,
     },
   };
@@ -114,7 +114,7 @@ export function tick(r, shift) {
   const t = ++r.t;
   if (!r.onset && t >= r.onsetAt) { r.onset = true; onsetEffect(r); }
   if (f.rollbackAt != null && t >= f.rollbackAt) { f.deployBad = false; f.rollbackAt = null; }
-  if (f.dbDown && f.dbBackAt != null && t >= f.dbBackAt) { f.dbDown = false; f.dbBackAt = null; }
+  if (f.dbDown && f.dbBackAt != null && t >= f.dbBackAt) { f.dbDown = false; f.dbBackAt = null; f.dbTotal = 0; }
 
   const { snap, served } = step(r, t);
   shift.budget += served * C.income;
@@ -149,8 +149,8 @@ export function act(r, shift, id) {
   if (r.firstFixSeq == null) r.firstFixSeq = ++r.seq;
   r.log.push({ id, t });
   if (id === "scale") r.extra.push(t + C.scaleDelay);
-  if (id === "restart") { f.dbDown = true; f.dbBackAt = t + C.restartSeconds; }
-  if (id === "failover") { f.dbDown = true; f.dbBackAt = t + C.failoverSeconds; r.has.replica = false; shift.owned.replica = 0; }
+  if (id === "restart") { f.dbDown = true; f.dbBackAt = t + C.restartSeconds; f.dbTotal = C.restartSeconds; }
+  if (id === "failover") { f.dbDown = true; f.dbBackAt = t + C.failoverSeconds; f.dbTotal = C.failoverSeconds; r.has.replica = false; shift.owned.replica = 0; }
   if (id === "rollback") {
     if (f.deployBad) f.rollbackAt = t + C.rollbackSeconds;
     else { f.deployBad = true; f.rollbackAt = t + C.blipSeconds; }

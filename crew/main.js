@@ -17,7 +17,8 @@ const randomSeed = () => Math.random().toString(36).slice(2, 7);
 const hudState = () => ({
   budget: shift.budget, monitoring: shift.owned.monitoring > 0,
   avail: snap ? snap.avail : 1,
-  label: round && timer ? `R${shift.round + 1}/5 · ${Math.floor(round.t / 60)}:${String(round.t % 60).padStart(2, "0")}` : `Round ${Math.min(shift.round + 1, 5)}/5`,
+  label: round && timer ? `R${shift.round + 1}/5` : `Round ${Math.min(shift.round + 1, 5)}/5`,
+  left: round ? Math.max(0, C.roundSeconds - round.t) : C.roundSeconds, total: C.roundSeconds,
 });
 const stop = () => { clearInterval(timer); timer = null; clearTimeout(resultTimer); resultTimer = null; };
 
