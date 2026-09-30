@@ -23,7 +23,7 @@ export function renderHud({ budget, avail, label }) {
 export function setMenu(open) { $("#menu").hidden = !open; }
 
 export function setMuteLabel(muted) {
-  for (const id of ["#btn-mute", "#btn-mute-title"]) $(id).textContent = muted ? "🔇 Sound off" : "🔊 Sound on";
+  for (const id of ["#btn-mute", "#btn-mute-title"]) $(id).textContent = muted ? "Sound: off" : "Sound: on";
 }
 
 // One delegated click listener. Handlers are keyed by the data-* attribute name
@@ -47,7 +47,7 @@ export function renderPrep(shift) {
   const sheet = $("#sheet");
   sheet.dataset.phase = "prep";
   delete sheet.dataset.incident;
-  $("#sheet-title").textContent = `Round ${shift.round + 1} · Prep — spend wisely`;
+  $("#sheet-title").textContent = `Round ${shift.round + 1} of 5 · Prep`;
   const body = $("#sheet-body");
   body.className = "";
   body.innerHTML = Object.entries(SHOP_UI).map(([id, u]) => {
@@ -55,9 +55,9 @@ export function renderPrep(shift) {
     const maxed = own >= s.max, poor = shift.budget < s.cost;
     const tag = maxed ? "OWNED" : `$${s.cost}`;
     const count = id === "app" ? ` · ${own}/${s.max}` : "";
-    return `<button class="card shop" data-buy="${id}" ${maxed || poor ? "disabled" : ""}><span class="ic">${u.icon}</span><span class="tx"><b>${u.name}${count}</b><small>${u.note}</small></span><span class="price">${tag}</span></button>`;
+    return `<button class="card shop" data-buy="${id}" ${maxed || poor ? "disabled" : ""}><span class="tx"><b>${u.name}${count}</b><small>${u.note}</small></span><span class="price">${tag}</span></button>`;
   }).join("");
-  $("#sheet-foot").innerHTML = `<button class="btn go" data-go="ready">Ready — start the round</button>`;
+  $("#sheet-foot").innerHTML = `<button class="btn go" data-go="ready">Ready · start round ${shift.round + 1}</button>`;
 }
 
 export function renderLive(round, diagnosing = false) {
@@ -66,29 +66,29 @@ export function renderLive(round, diagnosing = false) {
   sheet.dataset.incident = round.id;
   const body = $("#sheet-body"), foot = $("#sheet-foot");
   if (diagnosing) {
-    $("#sheet-title").textContent = "What's really going on?";
+    $("#sheet-title").textContent = "Diagnose · what is the root cause?";
     body.className = "";
     body.innerHTML = round.hypOrder.map((h) => `<button class="card" data-hyp="${h}"><span class="tx"><b>${HYPOTHESES[h]}</b></span></button>`).join("");
     foot.innerHTML = `<button class="btn ghost" data-go="cancel">Back</button>`;
     return;
   }
-  $("#sheet-title").textContent = round.onset ? "Incident — act fast" : "Traffic is flowing…";
+  $("#sheet-title").textContent = round.onset ? "Incident · response" : "Monitoring traffic…";
   let chip = "";
   if (round.diagnosis) {
     const ok = round.diagnosis === INCIDENTS[round.id].correct;
-    chip = `<div class="chip ${ok ? "good" : "bad"}">${ok ? "✅" : "✖"} Diagnosis: ${HYPOTHESES[round.diagnosis]}</div>`;
+    chip = `<div class="chip ${ok ? "good" : "bad"}"><b>${ok ? "Correct" : "Incorrect"}</b>${HYPOTHESES[round.diagnosis]}</div>`;
   }
   body.className = "two";
   body.innerHTML = Object.keys(C.actions).map((id) => {
     const u = ACTION_UI[id], why = lockReason(round, id), cost = C.actions[id].cost;
-    return `<button class="card act" data-act="${id}" ${why ? "disabled" : ""}><span class="ic">${u.icon}</span><span class="tx"><b>${u.name}</b><small>${why || u.note}</small></span><span class="price">${cost ? `$${cost}` : "free"}</span></button>`;
+    return `<button class="card act" data-act="${id}" ${why ? "disabled" : ""}><span class="tx"><b>${u.name}</b><small>${why || u.note}</small></span><span class="price">${cost ? `$${cost}` : "free"}</span></button>`;
   }).join("");
   const canDiagnose = round.onset && !round.diagnosis;
-  foot.innerHTML = chip + `<button class="btn alt" data-go="diagnose" ${canDiagnose ? "" : "disabled"}>🔍 Diagnose</button>`;
+  foot.innerHTML = chip + `<button class="btn alt" data-go="diagnose" ${canDiagnose ? "" : "disabled"}>Diagnose the cause</button>`;
 }
 
 let bannerTimer, coachTimer;
-export function banner(text, ms = 1400) {
+export function banner(text, ms = 2400) {
   const b = $("#banner");
   b.textContent = text; b.hidden = false;
   clearTimeout(bannerTimer);
@@ -123,7 +123,7 @@ export function showBubble(target, clue) {
 export function showResult(res, shift) {
   const d = DEBRIEF[res.id];
   $("#result-kicker").textContent = `Round ${res.n + 1} · ${d.title}`;
-  $("#result-title").textContent = res.count === 3 ? "Flawless!" : res.count === 2 ? "Nice work!" : res.count === 1 ? "Rough one." : "That hurt.";
+  $("#result-title").textContent = res.count === 3 ? "Flawless recovery" : res.count === 2 ? "Solid recovery" : res.count === 1 ? "Rough recovery" : "Major outage";
   $("#result-stars").innerHTML = STARS.map(([k, t]) => `<li data-on="${res.stars[k] ? 1 : 0}"><span class="star">★</span>${t}</li>`).join("");
   $("#result-body").innerHTML = `<p><b>What happened</b>${d.what}</p><p><b>What a pro does</b>${d.pro}</p>`;
   $("#result-money").textContent = `Earned ${money(res.earned)} · Spent on fixes ${money(res.spent)} · Budget ${money(shift.budget)}`;

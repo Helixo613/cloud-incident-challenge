@@ -1,43 +1,46 @@
-// SVG scene: the crew as characters joined by tubes. No game logic here — it only draws a sim snapshot.
+// SVG scene: an isometric datacenter drawn from a sim snapshot. No game logic here — it only draws.
+import { CONFIG as C } from "./config.js";
+
 const NS = "http://www.w3.org/2000/svg";
-const APP_X = [60, 140, 220, 300];
-const AY = 246;
-const POS = { users: [180, 34], firewall: [180, 94], lb: [180, 154], cache: [70, 338], db: [190, 338], replica: [300, 338] };
-const LABEL = { users: "Users", firewall: "Firewall", lb: "Balancer", app: "App", cache: "Cache", db: "Database", replica: "Replica" };
-const REASON_TEXT = { "app-overload": "too busy!", "bad-deploy": "error!", "db-down": "no DB!", "db-overload": "DB slow!", "rate-limit": "throttled", attack: "bot!" };
-const FACE_Y = { users: -2, firewall: -4, lb: -2, app: -4, cache: -4, db: 2, replica: 2 };
+const U = 42, KX = U * 0.866, KY = U / 2, OX = 180, OY = 118, VW = 360, VH = 392;
+const VIEW = `0 0 ${VW} ${VH}`;
+const P = (gx, gy) => [OX + (gx - gy) * KX, OY + (gx + gy) * KY];
 
-const BODY = {
-  users: `<circle cx="-22" cy="4" r="15" class="b c2"/><circle cx="22" cy="4" r="15" class="b c2"/><circle cx="0" cy="-2" r="20" class="b"/>`,
-  firewall: `<path class="b" d="M-26 -22 H26 V6 Q26 26 0 34 Q-26 26 -26 6 Z"/>`,
-  lb: `<rect class="b" x="-34" y="-20" width="68" height="40" rx="14"/><path class="ln" d="M-22 -28 V-20 M0 -28 V-20 M22 -28 V-20"/>`,
-  app: `<rect class="b" x="-26" y="-26" width="52" height="52" rx="12"/><path class="ln" d="M-16 20 H16"/>`,
-  cache: `<rect class="b" x="-28" y="-20" width="56" height="40" rx="12"/><path class="bolt" d="M4 -30 L-6 -10 H2 L-4 4 L10 -16 H2 Z"/>`,
-  db: `<path class="b" d="M-26 -18 V18 Q0 32 26 18 V-18 Z"/><ellipse class="b top" cx="0" cy="-18" rx="26" ry="9"/>`,
-};
-BODY.replica = BODY.db;
-// Glossy highlight per body so the crew reads as toys, not boxes.
-const SHINE = {
-  users: `<ellipse class="shine" cx="-7" cy="-13" rx="8" ry="4" transform="rotate(-25 -7 -13)"/>`,
-  firewall: `<path class="shine" d="M-19 -16 H-6 M-19 -8 V0"/>`,
-  lb: `<path class="shine" d="M-24 -12 Q-24 -15 -18 -15 H-4"/>`,
-  app: `<path class="shine" d="M-18 -19 H-4 M-18 -19 V-9"/>`,
-  cache: `<path class="shine" d="M-21 -12 Q-21 -14 -16 -14 H-2"/>`,
-  db: `<path class="shine" d="M-19 -4 V8"/>`,
-};
-SHINE.replica = SHINE.db;
-const CHEEKS = `<circle class="cheek" cx="-17" cy="8" r="3.5"/><circle class="cheek" cx="17" cy="8" r="3.5"/>`;
-// Labels: stacked column sits beside its character, the rest below it.
-const SIDE = { users: 44, firewall: 34, lb: 42 };
+// Grid layout. Traffic enters on the left (users → firewall → balancer), fans out to four app
+// slots, meets at hub J, then reaches the data tier (cache · database · replica).
+const USERS = [-1.8, 1.8], FW = [-1.8, 0], LB = [0, 0];
+const APPS = [[1.25, 4.55], [2.35, 3.45], [3.45, 2.35], [4.55, 1.25]];
+const J = [4.55, 4.55], CACHE = [4.55, 6.85], DB = [5.7, 5.7], REPLICA = [6.85, 4.55];
+const NODES = [
+  ["users", "users", ...USERS], ["firewall", "firewall", ...FW], ["lb", "lb", ...LB],
+  ...APPS.map(([x, y], i) => ["app", `app${i}`, x, y]),
+  ["cache", "cache", ...CACHE], ["db", "db", ...DB], ["replica", "replica", ...REPLICA],
+].sort((a, b) => a[2] + a[3] - (b[2] + b[3]));   // back to front
 
-const FACE = `<g class="face">
-  <g class="e e-happy"><circle cx="-9" r="6" class="w"/><circle cx="9" r="6" class="w"/><circle cx="-8" cy="1" r="2.8" class="p"/><circle cx="10" cy="1" r="2.8" class="p"/></g>
-  <g class="e e-sweat"><circle cx="-9" r="6" class="w"/><circle cx="9" r="6" class="w"/><circle cx="-9" cy="-1" r="2.8" class="p"/><circle cx="9" cy="-1" r="2.8" class="p"/><path class="drop" d="M20 -12 q4 6 0 9 q-4 -3 0 -9z"/></g>
-  <g class="e e-dizzy"><circle cx="-9" r="6" class="w"/><circle cx="9" r="6" class="w"/><path class="sp" d="M-12 0 a3 3 0 1 1 3 3 M6 0 a3 3 0 1 1 3 3"/></g>
-  <g class="e e-dead"><path class="x" d="M-14 -5 l10 10 m0 -10 l-10 10 M4 -5 l10 10 m0 -10 l-10 10"/></g>
-  <path class="m m-happy" d="M-7 10 Q0 17 7 10"/><path class="m m-sweat" d="M-6 12 Q0 9 6 12"/><path class="m m-dizzy" d="M-7 12 q3.5 -5 7 0 t7 0"/><path class="m m-dead" d="M-6 12 H6"/>
-</g>`;
+const NAME = { users: "USERS", firewall: "FIREWALL", lb: "BALANCER", cache: "CACHE", db: "DATABASE", replica: "REPLICA" };
+const LABEL = { users: "Users", firewall: "Firewall", lb: "Load balancer", app: "App server", cache: "Cache", db: "Database", replica: "Replica" };
+const REASON_TEXT = { "app-overload": "timeout", "bad-deploy": "HTTP 500", "db-down": "no DB", "db-overload": "DB slow", "rate-limit": "throttled", attack: "bot traffic" };
+// Tap area per kind (viewBox units): half width, and how far below the anchor it reaches.
+const HIT_W = { users: 32.5, firewall: 32.5, lb: 32.5, app: 36, cache: 38, db: 38, replica: 38 };
+// Flag nudges and max widths (viewBox units) so neighbouring flags never touch.
+const FLAG_DX = { lb: 16, cache: -8, replica: 8 };
+const FLAG_MAX = { users: 96, firewall: 96, lb: 110, app: 76, cache: 80, db: 92, replica: 80 };
 
+// Cables as grid-aligned polylines (grid coords). Shared stretches start at equal distances so dashes line up.
+const LINKS = [
+  { id: "uf", pts: [USERS, FW] },
+  { id: "fl", pts: [FW, LB] },
+  ...APPS.flatMap(([x, y], i) => [
+    { id: `a${i}`, app: i, pts: x > y ? [[0, 0], [x, 0], [x, y]] : [[0, 0], [0, y], [x, y]] },
+    { id: `d${i}`, app: i, pts: x > y ? [[x, y], [J[0], y], J] : [[x, y], [x, J[1]], J] },
+  ]),
+  { id: "jd", pts: [J, DB] },
+  { id: "jc", pts: [J, CACHE] },
+  { id: "jr", pts: [J, REPLICA], replica: true },
+];
+
+const f1 = (n) => Math.round(n * 10) / 10;
+const pts = (...p) => p.map(([x, y]) => `${f1(x)},${f1(y)}`).join(" ");
 const mk = (tag, attrs = {}, html = "") => {
   const e = document.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
@@ -45,106 +48,226 @@ const mk = (tag, attrs = {}, html = "") => {
   return e;
 };
 
-const LINKS = (() => {
-  const l = [{ id: "ul", d: "M180 58 V134" }];
-  APP_X.forEach((x, i) => {
-    l.push({ id: `la${i}`, d: `M180 176 C180 204 ${x} 186 ${x} ${AY - 28}`, app: i });
-    l.push({ id: `ad${i}`, d: `M${x} ${AY + 28} C${x} 300 190 286 190 312`, app: i });
-    l.push({ id: `ac${i}`, d: `M${x} ${AY + 28} C${x} 300 70 286 70 312`, app: i });
-  });
-  l.push({ id: "dr", d: "M218 338 H272" });
-  return l;
-})();
+// Isometric box centred on (cx, cy): a = half size along the grid x axis, b = along y, h = height.
+// Three faces: .l (+y side, lit), .r (+x side, shade), .t (top). Returns svg markup and its corners.
+function box(cx, cy, a, b, h, cls = "") {
+  const F = [cx + 0.866 * (a - b), cy + 0.5 * (a + b)], R = [cx + 0.866 * (a + b), cy + 0.5 * (a - b)];
+  const L = [cx - 0.866 * (a + b), cy + 0.5 * (b - a)], B = [cx - 0.866 * (a - b), cy - 0.5 * (a + b)];
+  const up = ([x, y]) => [x, y - h];
+  const svg = `<polygon class="l ${cls}" points="${pts(L, F, up(F), up(L))}"/><polygon class="r ${cls}" points="${pts(F, R, up(R), up(F))}"/><polygon class="t ${cls}" points="${pts(up(B), up(R), up(F), up(L))}"/>`;
+  return { svg, L, F, R, top: cy - 0.5 * (a + b) - h, bottom: F[1] };
+}
+// Flat drawing on a plane: top face (grid x/y), left face (grid x, vertical) or right face (-grid y, vertical).
+const onTop = (x, y, s) => `<g transform="matrix(.866 .5 -.866 .5 ${f1(x)} ${f1(y)})">${s}</g>`;
+const onLeft = ([x, y], s) => `<g transform="matrix(.866 .5 0 1 ${f1(x)} ${f1(y)})">${s}</g>`;
+const onRight = ([x, y], s) => `<g transform="matrix(.866 -.5 0 1 ${f1(x)} ${f1(y)})">${s}</g>`;
+const diamond = (cx, cy, s) => pts([cx, cy - s], [cx + 1.732 * s, cy], [cx, cy + s], [cx - 1.732 * s, cy]);
+
+function drum(cx, cy, rx, h) {
+  const ry = rx / 2, t = cy - h;
+  const band = (y) => `<path class="band" d="M${f1(cx - rx)} ${f1(y)}a${rx} ${ry} 0 0 0 ${2 * rx} 0"/>`;
+  return {
+    svg: `<path class="l" d="M${f1(cx - rx)} ${f1(t)}v${h}a${rx} ${ry} 0 0 0 ${rx} ${ry}v${-h}a${rx} ${ry} 0 0 1 ${-rx} ${-ry}z"/>` +
+      `<path class="r" d="M${f1(cx)} ${f1(t + ry)}v${h}a${rx} ${ry} 0 0 0 ${rx} ${-ry}v${-h}a${rx} ${ry} 0 0 1 ${-rx} ${ry}z"/>` +
+      band(t + h * 0.36) + band(t + h * 0.7) + `<ellipse class="t" cx="${f1(cx)}" cy="${f1(t)}" rx="${rx}" ry="${ry}"/>` +
+      `<ellipse class="rim" cx="${f1(cx)}" cy="${f1(t)}" rx="${rx * 0.62}" ry="${ry * 0.62}"/>`,
+    top: t - ry, bottom: cy + ry,
+  };
+}
+
+// Each kind returns { svg, top, bottom, pad } — pad is the ground half-size used for the dashed slot and the glow.
+const SHAPES = {
+  users(x, y) {
+    const b = box(x, y, 22, 22, 6);
+    const people = [[-12, -10], [-3, -14], [8, -9], [-11, 4], [1, -1], [12, 6], [-2, 11], [10, -1]]
+      .map(([u, v]) => { const px = x + 0.866 * (u - v), py = y - 6 + 0.5 * (u + v); return `<path class="fig" d="M${f1(px)} ${f1(py)}v-5"/><circle class="head" cx="${f1(px)}" cy="${f1(py - 6.5)}" r="2.2"/>`; }).join("");
+    return { svg: b.svg + people, top: b.top - 9, bottom: b.bottom, pad: 22 };
+  },
+  firewall(x, y) {
+    // A gate across the cable: two posts and a slatted wall between them.
+    const back = box(x + 0.866 * 18, y - 9, 6, 6, 28, "post"), front = box(x - 0.866 * 18, y + 9, 6, 6, 28, "post");
+    const wall = box(x, y, 3.5, 17, 21);
+    const slats = onRight(wall.F, [0, 1, 2, 3, 4].map((i) => `<rect class="slat" x="${4 + i * 6.4}" y="-18" width="2.2" height="15"/>`).join(""));
+    return { svg: back.svg + wall.svg + slats + front.svg, top: back.top, bottom: front.bottom, pad: 20 };
+  },
+  lb(x, y) {
+    const b = box(x, y, 19, 19, 18);
+    const fork = onTop(x, y - 18, `<path class="glyph" d="M-9 -9 L-1 -1 M-1 -1 L9 -6 M-1 -1 L6 6 M-1 -1 L-4 9"/><circle class="glyph-dot" cx="-9" cy="-9" r="2"/>`);
+    const ports = onLeft(b.L, [0, 1, 2, 3, 4].map((i) => `<rect class="port" x="${6 + i * 5.6}" y="-11" width="3" height="4" rx=".6"/>`).join(""));
+    return { svg: b.svg + fork + ports, top: b.top, bottom: b.bottom, pad: 19 };
+  },
+  app(x, y) {
+    const a = 17, h = 42, b = box(x, y, a, a, h);
+    const rows = [0, 1, 2, 3, 4];
+    const left = onLeft(b.L, rows.map((i) => `<rect class="slit" x="4" y="${-h + 6 + i * 7.4}" width="${2 * a - 13}" height="2.4" rx=".8"/><circle class="led" cx="${2 * a - 4.5}" cy="${-h + 7.2 + i * 7.4}" r="1.5"/>`).join(""));
+    const right = onRight(b.F, rows.map((i) => `<rect class="vent" x="5" y="${-h + 6 + i * 7.4}" width="${2 * a - 10}" height="1.6"/>`).join(""));
+    return { svg: b.svg + left + right, top: b.top, bottom: b.bottom, pad: 17 };
+  },
+  cache(x, y) {
+    const b = box(x, y, 17, 17, 18);
+    const bolt = onTop(x, y - 18, `<path class="glyph-fill" d="M3 -10 L-6 1 L0 1 L-3 10 L7 -2 L1 -2 Z"/>`);
+    const rows = onLeft(b.L, [0, 1].map((i) => `<rect class="slit" x="4" y="${-14 + i * 6}" width="21" height="2.2" rx=".8"/>`).join(""));
+    return { svg: b.svg + bolt + rows, top: b.top, bottom: b.bottom, pad: 17 };
+  },
+  db(x, y) { return { ...drum(x, y, 25, 30), pad: 17 }; },
+  replica(x, y) { return { ...drum(x, y, 22, 26), pad: 15 }; },
+};
+
+// Flag text by kind: [status word, colour level, number shown with Monitoring].
+function flagState(kind, s, ctx) {
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  const load = (x) => (x >= 1 ? ["OVERLOADED", "bad"] : x >= 0.7 ? ["BUSY", "warn"] : ["OK", "ok"]);
+  switch (kind) {
+    case "users": return [...(s.avail >= 0.95 ? ["OK", "ok"] : s.avail >= 0.6 ? ["DEGRADED", "warn"] : ["OUTAGE", "bad"]), pct(s.avail)];
+    case "firewall": {
+      const pass = s.block ? C.blockPass : C.firewallPass, blocked = s.badIn / pass - s.badIn;
+      return [...(s.block ? ["BLOCKING", "ok"] : s.badIn > 1 ? ["BOTS PASSING", "warn"] : ["OK", "ok"]), `${Math.round(blocked)}/${Math.round(s.badIn)}`];
+    }
+    case "lb": return [...(s.rateLimit ? ["LIMITING", "warn"] : ["OK", "ok"]), `${Math.round(s.incoming)}/s`];
+    case "app": return [...(ctx.m && s.deployBad ? ["ERRORS", "bad"] : load(s.appLoad)), pct(s.appLoad)];
+    case "cache": return [...(s.hit < 0.1 ? ["COLD", "bad"] : s.hit < 0.5 ? ["WARMING", "warn"] : ["OK", "ok"]), pct(s.hit)];
+    case "db": return s.dbDown ? ["OFFLINE", "bad", "—"] : [...load(s.dbLoad ?? 0), pct(s.dbLoad ?? 0)];
+    case "replica": return !s.replica ? ["PROMOTED", "info", ""] : s.dbDown ? ["ACTIVE", "warn", ""] : ["STANDBY", "info", ""];
+    default: return ["OK", "ok", ""];
+  }
+}
 
 export function createScene(svg, { onTap }) {
-  let nodes = {}, tubes = {}, dotsG, fxG;
+  let nodes = {}, flags = {}, glows = {}, links = {}, fxG, owned = {};
 
-  function creature(kind, key, x, y) {
-    const g = mk("g", { class: `cr k-${kind}`, "data-kind": kind, "data-key": key, "data-mood": "happy", "data-x": x, "data-y": y, transform: `translate(${x} ${y})`, role: "button", tabindex: "0", "aria-label": LABEL[kind] });
-    const side = SIDE[kind];
-    const lx = side ?? 0, ly = side ? 4 : 47, w = LABEL[kind].length * 7 + 12;
-    g.innerHTML = `<circle class="hit" r="34"/><ellipse class="gr" cx="0" cy="34" rx="26" ry="5"/><g class="idle"><g class="sh">${BODY[kind]}${SHINE[kind]}</g><g transform="translate(0 ${FACE_Y[kind]})">${FACE}${CHEEKS}</g></g><g class="lg"><rect class="pill" x="${side ? lx - 4 : -w / 2}" y="${ly - 12}" width="${w}" height="17" rx="8.5"/><text class="lbl" x="${side ? lx - 4 + w / 2 : 0}" y="${ly}">${LABEL[kind]}</text></g>`;
-    return g;
-  }
-
-  function setOff(g, off) {
+  function setOff(key, off) {
+    const g = nodes[key];
     if (!g) return;
     g.classList.toggle("off", off);
     g.setAttribute("tabindex", off ? "-1" : "0");
+    flags[key].g.classList.toggle("off", off);
+    glows[key].classList.toggle("off", off);
   }
 
   function applyServers(n) {
-    for (let i = 0; i < 4; i++) setOff(nodes[`app${i}`], i >= n);
-    for (const t of Object.values(tubes)) if (t.l.app !== undefined) t.g.classList.toggle("off", t.l.app >= n);
+    for (let i = 0; i < 4; i++) setOff(`app${i}`, i >= n);
+    for (const l of Object.values(links)) if (l.app !== undefined) l.g.classList.toggle("off", l.app >= n);
   }
 
-  function build(owned) {
+  function build(o) {
+    owned = o;
+    svg.setAttribute("viewBox", VIEW);
     svg.replaceChildren();
-    const tubeG = mk("g"), cr = mk("g");
-    dotsG = mk("g"); fxG = mk("g");
-    svg.append(tubeG, dotsG, cr, fxG);
-    nodes = {}; tubes = {};
+    const grid = mk("g", { class: "grid", mask: "url(#crewFade)" }), floor = mk("g"), cables = mk("g"), objs = mk("g"), flagG = mk("g", { class: "flags" });
+    fxG = mk("g", { class: "fx" });
+    svg.append(mk("defs", {}, `<radialGradient id="crewFadeG" cx="50%" cy="48%" r="58%"><stop offset="0" stop-color="#fff"/><stop offset=".7" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><mask id="crewFade"><rect width="${VW}" height="${VH}" fill="url(#crewFadeG)"/></mask>`), grid, floor, cables, objs, flagG, fxG);
+    let d = "";
+    for (let i = -8; i <= 12; i++) d += `M${pts(P(i, -8))} L${pts(P(i, 12))} M${pts(P(-8, i))} L${pts(P(12, i))} `;
+    grid.append(mk("path", { d }));
+    nodes = {}; flags = {}; glows = {}; links = {};
+
     for (const l of LINKS) {
-      const g = mk("g", { class: "tubeg" });
-      g.append(mk("path", { d: l.d, class: "tube" }), mk("path", { d: l.d, class: "tube core" }));
-      tubeG.append(g);
-      tubes[l.id] = { g, l };
+      const dd = "M" + l.pts.map((p) => pts(P(...p))).join(" L");
+      const g = mk("g", { class: "link" });
+      const pulse = mk("path", { d: dd, class: "pulse" });
+      g.append(mk("path", { d: dd, class: "cable" }), pulse);
+      if (l.replica && !o.replica) g.classList.add("off");
+      cables.append(g);
+      links[l.id] = { g, pulse, app: l.app };
     }
-    const add = (kind, key, x, y, on = true) => {
-      const g = creature(kind, key, x, y);
-      if (!on) setOff(g, true);
-      cr.append(g);
+
+    for (const [kind, key, gx, gy] of NODES) {
+      const [x, y] = P(gx, gy);
+      const sh = SHAPES[kind](x, y);
+      const hw = HIT_W[kind], hitTop = sh.top - 35;
+      const name = kind === "app" ? `APP-${+key.slice(3) + 1}` : NAME[kind];
+      const g = mk("g", { class: `cr k-${kind}`, "data-kind": kind, "data-key": key, "data-mood": "happy", "data-x": f1(x), "data-y": f1(sh.top), role: "button", tabindex: "0", "aria-label": LABEL[kind] },
+        `<rect class="hit" x="${f1(x - hw)}" y="${f1(hitTop)}" width="${2 * hw}" height="${f1(sh.bottom + 3 - hitTop)}"/>` +
+        `<polygon class="pad" points="${diamond(x, y, sh.pad + 4)}"/><g class="body">${sh.svg}</g>`);
+      objs.append(g);
       nodes[key] = g;
-    };
-    add("users", "users", ...POS.users);
-    add("firewall", "firewall", ...POS.firewall, !!owned.firewall);
-    add("lb", "lb", ...POS.lb);
-    APP_X.forEach((x, i) => add("app", `app${i}`, x, AY, i < owned.app));
-    add("cache", "cache", ...POS.cache);
-    add("db", "db", ...POS.db);
-    add("replica", "replica", ...POS.replica, !!owned.replica);
-    if (owned.monitoring) fxG.append(mk("text", { x: 334, y: 30, class: "radar", "text-anchor": "middle" }, "📡"));
-    applyServers(owned.app);
+      const glow = mk("ellipse", { class: "glow", cx: f1(x), cy: f1(y), rx: f1(sh.pad * 2.3), ry: f1(sh.pad * 1.15) });
+      floor.append(glow);
+      glows[key] = glow;
+      const fg = mk("g", { class: "flag", "data-key": key, "data-level": "ok" },
+        `<rect class="bg" height="26" rx="4"/><path class="notch"/><text class="nm" y="0">${name}</text><text class="nu"></text><text class="st"></text><rect class="strip" height="2"/>`);
+      flagG.append(fg);
+      flags[key] = { g: fg, key, kind, x, dx: FLAG_DX[kind] || 0, top: sh.top, name, last: "" };
+    }
+    setOff("firewall", !o.firewall);
+    setOff("replica", !o.replica);
+    if (o.monitoring) fxG.append(mk("text", { class: "mon", x: VW - 8, y: 16, "text-anchor": "end" }, "MONITORING ON"));
+    applyServers(o.app);
   }
 
-  const spawn = (id, n, cls = "") => {
-    if (!tubes[id] || tubes[id].g.classList.contains("off") || document.hidden) return;
-    for (let k = 0; k < n; k++) {
-      const c = mk("circle", { r: 4.5, class: `dot ${cls}` });
-      const a = mk("animateMotion", { dur: "1.1s", path: tubes[id].l.d, begin: "indefinite", fill: "freeze" });
-      c.append(a);
-      dotsG.append(c);
-      setTimeout(() => { try { a.beginElement(); } catch {} }, (k * 900) / n);
-      setTimeout(() => c.remove(), 900 / n * k + 1300);
-    }
-  };
+  // Lay out one flag: name (+ number with Monitoring) on line 1, status word on line 2.
+  function drawFlag(f, [word, level, num]) {
+    const n = owned.monitoring ? num : "";
+    const sig = `${word}|${level}|${n}`;
+    if (sig === f.last) return;
+    f.last = sig;
+    const [bg, notch, nm, nu, st, strip] = f.g.children;
+    nu.textContent = n; st.textContent = word;
+    // Measure, then squeeze text (textLength) that would push the flag past its slot width.
+    const fit = (el, est, max) => {
+      el.removeAttribute("textLength");
+      const l = (el.getComputedTextLength && el.getComputedTextLength()) || est;
+      if (l <= max) return l;
+      el.setAttribute("textLength", f1(max)); el.setAttribute("lengthAdjust", "spacingAndGlyphs");
+      return max;
+    };
+    const inner = FLAG_MAX[f.kind] - 13;
+    const nuL = n ? fit(nu, n.length * 6.4, inner) + 8 : 0;
+    const w = Math.round(Math.max(fit(nm, f.name.length * 6, inner - nuL) + nuL, fit(st, word.length * 6.2, inner)) + 13);
+    const x = Math.max(3, Math.min(VW - 3 - w, f.x + f.dx - w / 2)), y = f.top - 34;
+    f.g.dataset.level = level;
+    bg.setAttribute("x", f1(x)); bg.setAttribute("y", f1(y)); bg.setAttribute("width", w);
+    notch.setAttribute("d", `M${f1(f.x - 4)} ${f1(y + 26)} L${f1(f.x)} ${f1(y + 30)} L${f1(f.x + 4)} ${f1(y + 26)}Z`);
+    nm.setAttribute("x", f1(x + 6.5)); nm.setAttribute("y", f1(y + 10.5));
+    nu.setAttribute("x", f1(x + w - 6.5)); nu.setAttribute("y", f1(y + 10.5));
+    st.setAttribute("x", f1(x + 6.5)); st.setAttribute("y", f1(y + 21.5));
+    strip.setAttribute("x", f1(x + 1)); strip.setAttribute("y", f1(y + 24)); strip.setAttribute("width", w - 2);
+    nodes[f.key].setAttribute("aria-label", `${LABEL[f.kind]}: ${word.toLowerCase()}`);
+  }
 
   function burst(key, text) {
     const g = nodes[key];
-    if (!g) return;
-    const t = mk("text", { x: g.dataset.x, y: +g.dataset.y - 40, class: "pop" }, text);
+    if (!g || !fxG || fxG.querySelector(`.pop[data-key="${key}"]`)) return;   // one label per object at a time
+    const t = mk("text", { x: g.dataset.x, y: +g.dataset.y + 30, class: "pop", "data-key": key }, text);
     fxG.append(t);
     setTimeout(() => t.remove(), 1000);
   }
 
   function update(snap, { quiet = false } = {}) {
-    const mood = (key, m) => { if (nodes[key]) nodes[key].dataset.mood = m; };
     const load = (x) => (x >= 1 ? "dizzy" : x >= 0.7 ? "sweat" : "happy");
-    mood("users", snap.avail >= 0.95 ? "happy" : snap.avail >= 0.6 ? "sweat" : "dizzy");
-    mood("firewall", snap.badIn > 1 ? "sweat" : "happy");
-    mood("lb", "happy");
+    const mood = {
+      users: snap.avail >= 0.95 ? "happy" : snap.avail >= 0.6 ? "sweat" : "dizzy",
+      firewall: snap.badIn > 1 && !snap.block ? "sweat" : "happy",
+      lb: "happy",
+      db: snap.dbDown ? "dead" : load(snap.dbLoad ?? 0),
+      cache: snap.hit < 0.1 ? "dizzy" : snap.hit < 0.5 ? "sweat" : "happy",
+      replica: "happy",
+    };
     applyServers(snap.servers);
-    for (let i = 0; i < 4; i++) mood(`app${i}`, load(snap.appLoad));
-    mood("db", snap.dbDown ? "dead" : load(snap.dbLoad ?? 0));
-    mood("cache", snap.hit < 0.1 ? "dizzy" : snap.hit < 0.5 ? "sweat" : "happy");
-    mood("replica", "happy");
+    const ctx = { m: !!owned.monitoring };
+    for (const [key, g] of Object.entries(nodes)) {
+      const kind = g.dataset.kind, m = kind === "app" ? load(snap.appLoad) : mood[kind];
+      g.dataset.mood = m;
+      glows[key].dataset.mood = m;
+      if (!g.classList.contains("off")) drawFlag(flags[key], flagState(kind, snap, ctx));
+    }
+    const state = (id, cls) => links[id] && links[id].pulse.setAttribute("class", `pulse ${cls}`);
+    const pass = !owned.firewall ? 1 : snap.block ? C.blockPass : C.firewallPass;
+    state("uf", snap.badIn / pass > 1 ? "hot" : "");
+    state("fl", snap.badIn > 1 ? "hot" : "");
+    for (let i = 0; i < 4; i++) {
+      state(`a${i}`, snap.appLoad >= 1 ? "hot" : "");
+      state(`d${i}`, snap.dbDown ? "dead" : (snap.dbLoad ?? 0) >= 1 ? "hot" : "");
+    }
+    state("jd", snap.dbDown ? "dead" : (snap.dbLoad ?? 0) >= 1 ? "hot" : "");
+    state("jc", snap.hit < 0.1 ? "cold" : "");
+    state("jr", snap.dbDown && snap.replica ? "" : "idle");
+    svg.style.setProperty("--flow", `${Math.max(0.45, Math.min(1.4, 30 / Math.max(snap.good, 1))).toFixed(2)}s`);
     if (quiet) return;
-    const n = Math.max(1, Math.min(4, Math.round(snap.good / 12)));
-    spawn("ul", n, snap.badIn > 1 ? "bad" : "");
-    for (let i = 0; i < snap.servers; i++) { spawn(`la${i}`, 1); spawn(`ad${i}`, 1); spawn(`ac${i}`, 1); }
     if (snap.onset && snap.top) {
       const target = { "app-overload": `app${Math.floor(Math.random() * snap.servers)}`, "bad-deploy": "app0", "db-down": "db", "db-overload": "db", "rate-limit": "lb", attack: snap.block ? "lb" : "firewall" }[snap.top];
-      burst(target, REASON_TEXT[snap.top]);
+      if (target && !nodes[target]?.classList.contains("off")) burst(target, REASON_TEXT[snap.top]);
+      else if (target === "firewall") burst("lb", REASON_TEXT[snap.top]);
     }
   }
 

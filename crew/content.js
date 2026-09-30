@@ -10,20 +10,20 @@ export const HYPOTHESES = {
 };
 
 export const ACTION_UI = {
-  scale: { icon: "➕", name: "Add app server", note: "+1 server for this round" },
-  restart: { icon: "🔄", name: "Restart database", note: "≈20 s of downtime" },
-  failover: { icon: "🛟", name: "Fail over to replica", note: "≈2 s blip, uses up the replica" },
-  rollback: { icon: "⏪", name: "Roll back release", note: "Undo the latest deploy" },
-  warm: { icon: "🔥", name: "Warm the cache", note: "Refills over ≈20 s" },
-  ratelimit: { icon: "🚦", name: "Rate-limit", note: "Cap traffic at 80% of capacity" },
-  block: { icon: "🛡️", name: "Block bad traffic", note: "The firewall drops the bots" },
+  scale: { name: "Add app server", note: "+1 server for this round" },
+  restart: { name: "Restart database", note: "≈20 s of downtime" },
+  failover: { name: "Fail over to replica", note: "≈2 s blip, uses up the replica" },
+  rollback: { name: "Roll back release", note: "Undo the latest deploy" },
+  warm: { name: "Warm the cache", note: "Refills over ≈20 s" },
+  ratelimit: { name: "Rate-limit", note: "Cap traffic at 80% of capacity" },
+  block: { name: "Block bad traffic", note: "The firewall drops the bots" },
 };
 
 export const SHOP_UI = {
-  app: { icon: "🖥️", name: "App server", note: "+40 req/s of capacity" },
-  replica: { icon: "📀", name: "DB replica", note: "Shares reads · backup if the DB dies" },
-  monitoring: { icon: "📡", name: "Monitoring", note: "Exact numbers and logs" },
-  firewall: { icon: "🧱", name: "Firewall", note: "Stops most bad traffic" },
+  app: { name: "App server", note: "+40 req/s of capacity" },
+  replica: { name: "DB replica", note: "Shares reads · backup if the DB dies" },
+  monitoring: { name: "Monitoring", note: "Exact numbers and logs" },
+  firewall: { name: "Firewall", note: "Stops most bad traffic" },
 };
 
 export const STARS = [
@@ -42,39 +42,39 @@ export const DEBRIEF = {
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 
-// What a creature says when tapped. `s` is a sim snapshot, `m` = Monitoring owned.
+// Status lines for a tapped service. `s` is a sim snapshot, `m` = Monitoring owned (numbers only with it).
 export function clueFor(kind, s, m) {
   switch (kind) {
     case "users":
-      return { lines: [s.avail >= 0.95 ? "Everything works!" : s.avail >= 0.6 ? "Pages are slow and some fail…" : "The site is DOWN!"], gauge: { label: "Happy users", value: s.avail } };
+      return { lines: [m ? `USERS: ${pct(s.avail)} of requests succeed` : s.avail >= 0.95 ? "USERS: pages load normally" : s.avail >= 0.6 ? "USERS: slow pages, some requests fail" : "USERS: site unreachable for most users"], gauge: { label: "Happy users", value: s.avail } };
     case "firewall":
-      return { lines: [m ? (s.badIn > 0.5 ? `Suspicious traffic: ${Math.round(s.badIn)} req/s got through` : "Nothing suspicious") : (s.badIn > 0.5 ? "Lots of weird visitors…" : "Quiet at the gate.")], gauge: null };
+      return { lines: [m ? (s.badIn > 0.5 ? `FIREWALL: ${Math.round(s.badIn)} req/s of suspicious traffic getting through` : "FIREWALL: no suspicious traffic") : (s.badIn > 0.5 ? "FIREWALL: unusual traffic pattern at the edge" : "FIREWALL: quiet")], gauge: null };
     case "lb":
-      return { lines: [m ? `Routing ${Math.round(s.incoming)} req/s` : "Sending guests to the app servers."], gauge: null };
+      return { lines: [m ? `BALANCER: routing ${Math.round(s.incoming)} req/s` : "BALANCER: spreading requests across the app servers"], gauge: null };
     case "app": {
       const a = s.appLoad;
-      if (!m) return { lines: [a >= 1 ? "I can't keep up!" : a >= 0.7 ? "Getting hot in here…" : "Doing fine."], gauge: null };
-      return { lines: [`CPU ${pct(a)}`, s.deployBad ? "Half my replies are errors — it started right after the release." : a >= 1 ? "Requests are queueing up." : "Error rate normal."], gauge: { label: "CPU", value: a } };
+      if (!m) return { lines: [a >= 1 ? "APP: saturated, requests queueing" : a >= 0.7 ? "APP: running hot" : "APP: healthy"], gauge: null };
+      return { lines: [`APP: CPU ${pct(a)}`, s.deployBad ? "≈50% of responses are HTTP 500 since the last release" : a >= 1 ? "CPU saturated, requests queueing" : "Error rate normal"], gauge: { label: "CPU", value: a } };
     }
     case "db": {
-      if (s.dbDown) return { lines: m ? ["OFFLINE — connection refused", "Writes are failing."] : ["…"], gauge: null };
+      if (s.dbDown) return { lines: m ? ["DATABASE: OFFLINE, connection refused", "Writes are failing"] : ["DATABASE: not responding"], gauge: null };
       const d = s.dbLoad;
-      if (!m) return { lines: [d >= 1 ? "I'm drowning in queries!" : d >= 0.7 ? "Busy, busy…" : "Relaxed."], gauge: null };
-      return { lines: [`Load ${pct(d)}`, s.hit < 0.3 ? "Almost no cache hits — every read lands on me." : "The cache absorbs most reads."], gauge: { label: "DB load", value: d } };
+      if (!m) return { lines: [d >= 1 ? "DATABASE: overwhelmed by queries" : d >= 0.7 ? "DATABASE: busy" : "DATABASE: healthy"], gauge: null };
+      return { lines: [`DATABASE: load ${pct(d)}`, s.hit < 0.3 ? "Almost no cache hits, every read reaches the database" : "The cache absorbs most reads"], gauge: { label: "DB load", value: d } };
     }
     case "cache":
-      return { lines: m ? [`Hit rate ${pct(s.hit)}`, s.hit < 0.3 ? "I was wiped. I'm empty!" : "Serving most reads."] : [s.hit < 0.3 ? "Brrr… I feel empty." : "Full of goodies."], gauge: m ? { label: "Hit rate", value: s.hit / 0.6 } : null };
+      return { lines: m ? [`CACHE: hit rate ${pct(s.hit)}`, s.hit < 0.3 ? "Cold: hit rate collapsed" : "Serving most reads"] : [s.hit < 0.3 ? "CACHE: cold, hit rate collapsed" : "CACHE: warm, serving most reads"], gauge: m ? { label: "Hit rate", value: s.hit / 0.6 } : null };
     case "replica":
-      return { lines: [s.dbDown ? "I'm the backup — I can still serve reads." : "Keeping a copy of the data."], gauge: null };
+      return { lines: [s.dbDown ? "REPLICA: standby copy, can still serve reads" : "REPLICA: in sync with the primary"], gauge: null };
     default:
       return { lines: [], gauge: null };
   }
 }
 
-// One line under the scene: user complaints, or a log line when Monitoring is owned.
+// One line under the scene: user reports, or a log line when Monitoring is owned.
 export function tickerLine(s, m, id) {
   if (!s.onset) return "All quiet…";
-  if (!m) return s.avail >= 0.95 ? "Users: all good" : s.avail >= 0.6 ? "Users: \"It's slow and I get errors\"" : "Users: \"Your site is down!!\"";
+  if (!m) return s.avail >= 0.95 ? "Support: no complaints" : s.avail >= 0.6 ? "Support: users report slow pages and errors" : "Support: users report the site is down";
   if (s.avail >= 0.95) return "LOG: all systems nominal";
   if (id === "bad-deploy") return "LOG: release v2.4.1 deployed · error rate 50%";
   if (id === "db-crash") return "LOG: db-primary connection refused";

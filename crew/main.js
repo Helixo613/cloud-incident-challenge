@@ -55,9 +55,9 @@ function step() {
   ui.renderHud(hudState());
   ui.setTicker(tickerLine(snap, round.has.monitoring, round.id));
   if (!wasOnset && round.onset) {
-    ui.banner("INCIDENT!");
+    ui.banner(`INCIDENT · ROUND ${shift.round + 1}`);
     ui.renderLive(round);
-    if (shift.round === 0) ui.coach("Tap a crew member to hear what they say. Then hit Diagnose.");
+    if (shift.round === 0) ui.coach("Tap a service in the datacenter to inspect it. Then press Diagnose.");
   }
   ui.setAlarm(round.onset && snap.avail < C.stableAvail);
   if (bubbleKey) refreshBubble();
