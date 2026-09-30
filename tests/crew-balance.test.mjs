@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { gradeFor } from "../crew/sim.js";
-import { masher, playShift, pro } from "./helpers/crew-bots.mjs";
+import { masher, playShift, pro, slowPro } from "./helpers/crew-bots.mjs";
 
 const SEEDS = Array.from({ length: 200 }, (_, i) => `seed-${i}`);
 const stars = (shift) => shift.results.reduce((n, x) => n + x.count, 0);
@@ -8,6 +8,9 @@ const stars = (shift) => shift.results.reduce((n, x) => n + x.count, 0);
 describe("balance", () => {
   it("a reasonable player reaches grade B or better on every seed", () => {
     for (const seed of SEEDS) expect("SAB", seed).toContain(gradeFor(playShift(seed, pro)));
+  });
+  it("a human-speed player (10 s slower than pro) still reaches grade B or better on every seed", () => {
+    for (const seed of SEEDS) expect("SAB", seed).toContain(gradeFor(playShift(seed, slowPro)));
   });
   it("a button masher averages under 2 stars on at least 2 incident types", () => {
     const sum = {}, n = {};

@@ -38,3 +38,13 @@ export const masher = {
     else act(r, shift, rng.pick(Object.keys(C.actions)));
   },
 };
+
+// Human-speed pro: waits 10 ticks after onset before diagnosing and fixing.
+export const slowPro = {
+  prep: pro.prep,
+  live(r, shift) {
+    if (!r.onset || r.proDone) return;
+    if (r.t - r.onsetAt < 10) return;
+    pro.live(r, shift);
+  },
+};

@@ -143,7 +143,12 @@ export function showResult(res, shift) {
   const fix = res.log && res.log.length ? ACTION_UI[res.log[0].id].name : "none";
   const rec = res.mitigatedAt != null ? (res.mitigatedAt - res.onsetAt <= 0 ? "Held stable from the start" : `Recovered ${res.mitigatedAt - res.onsetAt} s after the incident began`) : "Not recovered";
   $("#result-body").innerHTML = `<p><b>What happened</b>${d.what}</p><p><b>What a pro does</b>${d.pro}</p><p><b>What you did</b>You diagnosed: ${diag} · First fix: ${fix} · ${rec}</p>`;
-  $("#result-money").textContent = `Earned ${money(res.earned)} · Spent on fixes ${money(res.spent)} · Budget ${money(shift.budget)}`;
+  const w = res.why, miss = [];
+  if (!res.stars.avail) miss.push(`Missed: average uptime ${w.avail}%`);
+  if (!res.stars.fast) miss.push(w.fast == null ? "Missed: never recovered" : `Missed: took ${w.fast} s to recover`);
+  if (!res.stars.diag) miss.push(w.diag === "none" ? "Missed: never diagnosed" : w.diag === "wrong" ? "Missed: wrong diagnosis" : "Missed: fixed before diagnosing");
+  $("#result-why").innerHTML = miss.map((m) => `<li>${m}</li>`).join("");
+  $("#result-money").textContent = `Stage reward +${money(res.reward)} · Earned ${money(res.earned)} · Spent on fixes ${money(res.spent)} · Budget ${money(shift.budget)}`;
   document.querySelector("#screen-result [data-nav=next]").textContent = shiftOver(shift) ? "See final grade" : "Next round";
   showScreen("result");
 }

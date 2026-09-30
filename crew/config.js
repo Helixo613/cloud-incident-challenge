@@ -3,9 +3,9 @@ export const CONFIG = {
   startBudget: 120,
   income: 0.03,          // $ per successfully served request
   roundSeconds: 75,
-  onsetBase: 5,
+  onsetBase: 8,
   onsetJitter: 3,
-  baseRps: [20, 24, 28, 32, 36],
+  baseRps: [20, 22, 26, 30, 34],
   jitter: [0.9, 1.1],
   appCap: 40,            // rps per app server
   maxServers: 4,
@@ -24,7 +24,8 @@ export const CONFIG = {
   failoverSeconds: 2,
   rollbackSeconds: 3,
   blipSeconds: 5,        // rolling back when nothing is wrong causes a brief bad deploy
-  stableAvail: 0.95,
+  stableAvail: 0.9,      // same bar as starAvail: 'mitigated' and the uptime star agree
+  stageReward: { base: 50, perStar: 20 },
   stableSeconds: 10,
   fastSeconds: 30,
   starAvail: 0.9,

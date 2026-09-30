@@ -39,7 +39,7 @@ export function startRound(shift) {
     extra: [],                                     // ready-times of temporary servers
     has: { replica: o.replica > 0, monitoring: o.monitoring > 0, firewall: o.firewall > 0 },
     flags: { deployBad: false, rollbackAt: null, dbDown: false, dbBackAt: null, cacheCold: false, warmFrom: null, rateLimit: false, block: false },
-    stable: 0, mitigatedAt: null, availSum: 0, availN: 0,
+    stable: 0, mitigatedAt: null, availSum: 0, availN: 0, minAvail: 1,
     seq: 0, diagnosis: null, diagSeq: null, firstFixSeq: null,
     earned: 0, spent: 0, snap: null, log: [],
   };
@@ -122,6 +122,7 @@ export function tick(r, shift) {
   if (r.onset) {
     r.availSum += snap.avail;
     r.availN += 1;
+    r.minAvail = Math.min(r.minAvail, snap.avail);
     r.stable = snap.avail >= C.stableAvail ? r.stable + 1 : 0;
     if (r.mitigatedAt == null && snap.avail >= C.stableAvail) r.mitigatedAt = t;
   }
@@ -173,12 +174,20 @@ export function finishRound(r, shift) {
   const inc = INCIDENTS[r.id];
   const avg = r.availN ? r.availSum / r.availN : 1;
   const stars = {
-    avail: avg >= C.starAvail,
+    avail: avg >= C.starAvail || r.minAvail >= C.starAvail,
     fast: r.mitigatedAt != null && r.mitigatedAt - r.onsetAt <= C.fastSeconds,
     diag: r.diagnosis === inc.correct && (r.firstFixSeq == null || r.diagSeq < r.firstFixSeq),
   };
+  const count = +stars.avail + +stars.fast + +stars.diag;
+  const reward = C.stageReward.base + C.stageReward.perStar * count;
+  shift.budget += reward;
+  const why = {
+    avail: Math.round(avg * 100),
+    fast: r.mitigatedAt == null ? null : r.mitigatedAt - r.onsetAt,
+    diag: r.diagnosis == null ? "none" : r.diagnosis !== inc.correct ? "wrong" : "late",
+  };
   const res = {
-    id: r.id, n: r.n, avg, stars, count: +stars.avail + +stars.fast + +stars.diag,
+    id: r.id, n: r.n, avg, stars, count, reward, why,
     earned: r.earned, spent: r.spent, log: r.log, top: (r.snap && r.snap.top) || null, diagnosis: r.diagnosis, mitigatedAt: r.mitigatedAt, onsetAt: r.onsetAt,
   };
   shift.results.push(res);

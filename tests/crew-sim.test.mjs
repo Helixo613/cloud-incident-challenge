@@ -196,3 +196,38 @@ describe("diagnosis and stars", () => {
     expect(shiftOver(shift)).toBe(true);
   });
 });
+
+describe("fair stars and stage reward", () => {
+  it("holding above 90% for the whole round earns the uptime and fast stars", () => {
+    const { r, shift } = play("spike", { n: 0, owned: { app: 2 } });
+    const res = finishRound(r, shift);
+    expect(res.stars.avail).toBe(true);
+    expect(res.stars.fast).toBe(true);
+  });
+  it("uptime star is also granted when availability never dipped below the bar", () => {
+    const { r, shift } = play("spike", { n: 0, owned: { app: 2 } });
+    r.availSum = 0.5 * r.availN; r.minAvail = 0.95;      // low average, but never under 90%
+    expect(finishRound(r, shift).stars.avail).toBe(true);
+  });
+  it("pays base + perStar * stars into the budget", () => {
+    const { r, shift } = play("bad-deploy", { n: 1, diag: "bad-release", fixes: ["rollback"] });
+    const before = shift.budget;
+    const res = finishRound(r, shift);
+    expect(res.reward).toBe(C.stageReward.base + C.stageReward.perStar * res.count);
+    expect(shift.budget).toBe(before + res.reward);
+  });
+  it("a zero-star round still pays the base reward", () => {
+    const { r, shift } = play("db-crash", { n: 2 });
+    const res = finishRound(r, shift);
+    expect(res.count).toBe(0);
+    expect(res.reward).toBe(C.stageReward.base);
+  });
+  it("explains each missed star", () => {
+    const wrong = play("bad-deploy", { n: 1, diag: "capacity", fixes: ["rollback"] });
+    expect(finishRound(wrong.r, wrong.shift).why.diag).toBe("wrong");
+    const none = play("db-crash", { n: 2 });
+    const res = finishRound(none.r, none.shift);
+    expect(res.why).toEqual({ avail: Math.round(res.avg * 100), fast: null, diag: "none" });
+    expect(res.why.avail).toBeLessThan(90);
+  });
+});
