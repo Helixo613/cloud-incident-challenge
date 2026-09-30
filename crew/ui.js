@@ -96,6 +96,7 @@ export function banner(text, ms = 1400) {
 }
 export function setAlarm(on) { $("#stage").classList.toggle("alarm", on); }
 export function setTicker(text) { $("#ticker").textContent = text; }
+document.addEventListener("click", (e) => { if (e.target.closest("#coach")) $("#coach").hidden = true; });
 export function coach(text) {
   const c = $("#coach");
   clearTimeout(coachTimer);

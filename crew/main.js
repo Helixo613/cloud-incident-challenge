@@ -9,7 +9,7 @@ const seedParam = (params.get("seed") || "").trim();
 const speed = Math.min(16, Math.max(1, Number(params.get("speed")) || 1));   // ?speed=8 for tests
 const stageEl = document.querySelector("#stage");
 
-let shift = null, round = null, timer = null, snap = null, bubbleKey = null;
+let shift = null, round = null, timer = null, snap = null, bubbleKey = null, resultTimer = null, menuOpen = false;
 const scene = createScene(document.querySelector("#scene"), { onTap });
 
 const randomSeed = () => Math.random().toString(36).slice(2, 7);
@@ -18,7 +18,7 @@ const hudState = () => ({
   avail: snap ? snap.avail : 1,
   label: round && timer ? `R${shift.round + 1}/5 · ${Math.floor(round.t / 60)}:${String(round.t % 60).padStart(2, "0")}` : `Round ${Math.min(shift.round + 1, 5)}/5`,
 });
-const stop = () => { clearInterval(timer); timer = null; };
+const stop = () => { clearInterval(timer); timer = null; clearTimeout(resultTimer); resultTimer = null; };
 
 function newRun() {
   stop();
@@ -48,7 +48,7 @@ function ready() {
 }
 
 function step() {
-  if (document.hidden) return;
+  if (document.hidden || menuOpen) return;   // paused while the menu is open
   const wasOnset = round.onset;
   snap = tick(round, shift);
   scene.update(snap);
@@ -68,7 +68,7 @@ function end() {
   stop();
   ui.setAlarm(false);
   const res = finishRound(round, shift);
-  setTimeout(() => ui.showResult(res, shift), 700);
+  resultTimer = setTimeout(() => { resultTimer = null; ui.showResult(res, shift); }, 700);
 }
 
 function refreshBubble() {
@@ -94,10 +94,10 @@ ui.bind({
   nav: (id) => {
     if (id === "start") ui.showScreen("howto");
     if (id === "play") newRun();
-    if (id === "menu") ui.setMenu(true);
-    if (id === "resume") ui.setMenu(false);
-    if (id === "restart") { ui.setMenu(false); newRun(); }
-    if (id === "home") { stop(); ui.setMenu(false); ui.showScreen("title"); }
+    if (id === "menu") { menuOpen = true; ui.setMenu(true); }
+    if (id === "resume") { menuOpen = false; ui.setMenu(false); }
+    if (id === "restart") { menuOpen = false; ui.setMenu(false); newRun(); }
+    if (id === "home") { stop(); menuOpen = false; ui.setMenu(false); ui.showScreen("title"); }
     if (id === "next") { if (shiftOver(shift)) ui.showFinal(shift, gradeFor(shift)); else prep(); }
     if (id === "again") newRun();
     if (id === "copy") copyResult();
@@ -111,10 +111,12 @@ ui.bind({
   },
   go: (id) => {
     if (id === "ready") ready();
+    if (!round) return;
     if (id === "diagnose") ui.renderLive(round, true);
     if (id === "cancel") ui.renderLive(round);
   },
   hyp: (id) => {
+    if (!round || round.done) return;
     diagnose(round, id);
     ui.renderLive(round);
   },

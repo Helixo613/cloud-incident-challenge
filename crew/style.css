@@ -176,3 +176,24 @@ h1 span { color: var(--gold); text-shadow: 0 5px 0 #b3600e, 0 0 30px #ffc83d88; 
 .grade { width: 190px; height: 190px; margin: 12px auto; display: grid; place-items: center; font-size: 130px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #3a49a8, var(--card)); border: 6px solid var(--gold); box-shadow: 0 8px 0 var(--line), 0 0 50px #ffc83d66; -webkit-text-stroke: 3px var(--line); paint-order: stroke fill; }
 @media (max-height: 700px) { .grade { width: 130px; height: 130px; font-size: 88px; } #result-title { font-size: 34px; } .stars li .star { font-size: 32px; } }
 @media (max-width: 480px) { #sheet-body.two .card .ic { display: none; } #sheet-body.two .card { padding: 8px 10px; gap: 6px; } #sheet-body.two .card b { font-size: 15px; } }
+
+/* Fix round 1: de-crowd. Sheet = flex column; body scrolls, foot is a fixed row below it. */
+#sheet { display: flex; flex-direction: column; max-height: 40%; overflow: hidden; }
+#sheet-title, #coach { flex: none; }
+#sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+#sheet-foot { flex: none; position: static; background: none; margin-top: 2px; padding-bottom: 0; }
+#coach { position: static; margin: 0 0 8px; padding: 5px 10px; font-size: 13px; border-radius: 12px; box-shadow: 0 3px 0 var(--line); cursor: pointer; }
+#coach[hidden] { display: none; }
+@media (orientation: landscape) and (min-width: 560px) { #sheet { max-height: none; } }
+@media (max-height: 700px) {
+  #sheet { padding: 8px 10px 10px; }
+  #sheet-title { margin-bottom: 5px; }
+  #sheet-body { gap: 6px; }
+  .card { min-height: 52px; padding: 5px 10px; }
+  .card .ic { width: 34px !important; height: 34px !important; font-size: 20px !important; }
+  .card b { font-size: 15px; } .card small { font-size: 11px; }
+  #sheet-body:not(.two) { grid-template-columns: 1fr 1fr; }
+  .btn.go, .btn.alt { min-height: 52px; font-size: 18px; margin-top: 6px; }
+  #hud { padding: 6px 10px; }
+}
+@media (max-height: 700px) { #sheet-body:not(.two) .card .ic { display: none; } }
