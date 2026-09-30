@@ -32,8 +32,8 @@ h2 { font-size: 26px; }
 /* Buttons */
 .btn, .icon-btn { font: 800 18px var(--font); color: var(--ink); background: var(--card); border: 3px solid var(--line); border-radius: 16px; min-height: 52px; padding: 10px 18px; box-shadow: 0 5px 0 var(--line); cursor: pointer; display: block; width: 100%; margin: 12px 0 0; text-align: center; text-decoration: none; line-height: 1.2; }
 .btn:active, .icon-btn:active, .card:active:not([disabled]) { transform: translateY(4px); box-shadow: 0 1px 0 var(--line); }
-.btn.go { background: var(--green); color: var(--line); }
-.btn.alt { background: var(--blue); color: var(--line); }
+.btn.go { background-color: var(--green); color: var(--line); }
+.btn.alt { background-color: var(--blue); color: var(--line); }
 .btn.ghost { background: transparent; box-shadow: none; border-color: #ffffff33; color: var(--mute); }
 .btn[disabled], .card[disabled] { opacity: .45; pointer-events: none; }
 .icon-btn { width: 52px; margin: 0; padding: 0; font-size: 22px; flex: none; }
@@ -151,3 +151,28 @@ h1 span { color: var(--gold); text-shadow: 0 5px 0 #b3600e, 0 0 30px #ffc83d88; 
 .btn.go:active { box-shadow: 0 1px 0 #167a45, 0 2px 0 var(--line); }
 .btn.ghost { background-image: none; }
 .steps li { box-shadow: 0 4px 0 var(--line); }
+
+/* Task 7 game-feel polish */
+.card { background-image: linear-gradient(#ffffff26, #ffffff00 50%); box-shadow: 0 5px 0 var(--line), inset 0 -3px 0 #0000003a; }
+.card:not([disabled]):hover { filter: brightness(1.12); }
+.card.shop .ic, .card.act .ic { width: 42px; height: 42px; display: grid; place-items: center; background: #0b1230aa; border-radius: 12px; font-size: 24px; }
+.card .price { border: 2px solid var(--line); box-shadow: 0 2px 0 var(--line); }
+#sheet { background-image: linear-gradient(#ffffff14, #ffffff00 40px); box-shadow: 0 -8px 24px #0008; }
+#sheet[data-incident][data-phase=live] #sheet-title { color: var(--red); text-shadow: 0 0 12px #ff4d5e88; }
+#sheet-foot { margin-top: 4px; position: sticky; bottom: -14px; background: linear-gradient(#141c4a00, var(--bg2) 18px); padding-bottom: 2px; }
+#sheet-foot .btn { margin-top: 8px; }
+.btn.alt { background-image: linear-gradient(#ffffff2e, #ffffff00 55%); box-shadow: 0 5px 0 #1b78a8, 0 8px 0 var(--line); }
+.btn.alt:active { box-shadow: 0 1px 0 #1b78a8, 0 2px 0 var(--line); }
+#hud { background: linear-gradient(#05081c99, #05081c00); }
+.pill.gold { box-shadow: 0 3px 0 #b3600e; }
+#banner { font-size: 44px; text-shadow: 0 3px 0 var(--line); background-image: repeating-linear-gradient(-45deg, #0000 0 12px, #00000022 12px 24px); box-shadow: 0 6px 0 var(--line), 0 0 40px #ff4d5eaa; }
+#coach { top: auto; bottom: 40px; }
+#screen-result .panel, #screen-final .panel { position: relative; }
+#result-title { font-size: 44px; font-weight: 900; color: var(--gold); -webkit-text-stroke: 2px var(--line); paint-order: stroke fill; text-shadow: 0 5px 0 #b3600e, 0 0 30px #ffc83d66; animation: starpop .5s cubic-bezier(.2, 1.8, .4, 1) both; }
+.stars li .star { font-size: 40px; line-height: 1; text-shadow: 0 3px 0 var(--line); flex: none; }
+.stars li[data-on="1"] { background-image: linear-gradient(90deg, #ffc83d33, #ffc83d00); box-shadow: 0 0 22px #ffc83d55, 0 4px 0 var(--line); }
+.stars li[data-on="1"]:nth-child(2) .star { animation-delay: .25s; } .stars li[data-on="1"]:nth-child(3) .star { animation-delay: .5s; }
+.stars li { font-size: 17px; font-weight: 800; }
+.grade { width: 190px; height: 190px; margin: 12px auto; display: grid; place-items: center; font-size: 130px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #3a49a8, var(--card)); border: 6px solid var(--gold); box-shadow: 0 8px 0 var(--line), 0 0 50px #ffc83d66; -webkit-text-stroke: 3px var(--line); paint-order: stroke fill; }
+@media (max-height: 700px) { .grade { width: 130px; height: 130px; font-size: 88px; } #result-title { font-size: 34px; } .stars li .star { font-size: 32px; } }
+@media (max-width: 480px) { #sheet-body.two .card .ic { display: none; } #sheet-body.two .card { padding: 8px 10px; gap: 6px; } #sheet-body.two .card b { font-size: 15px; } }

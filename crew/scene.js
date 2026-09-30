@@ -67,8 +67,14 @@ export function createScene(svg, { onTap }) {
     return g;
   }
 
+  function setOff(g, off) {
+    if (!g) return;
+    g.classList.toggle("off", off);
+    g.setAttribute("tabindex", off ? "-1" : "0");
+  }
+
   function applyServers(n) {
-    for (let i = 0; i < 4; i++) nodes[`app${i}`]?.classList.toggle("off", i >= n);
+    for (let i = 0; i < 4; i++) setOff(nodes[`app${i}`], i >= n);
     for (const t of Object.values(tubes)) if (t.l.app !== undefined) t.g.classList.toggle("off", t.l.app >= n);
   }
 
@@ -86,7 +92,7 @@ export function createScene(svg, { onTap }) {
     }
     const add = (kind, key, x, y, on = true) => {
       const g = creature(kind, key, x, y);
-      if (!on) g.classList.add("off");
+      if (!on) setOff(g, true);
       cr.append(g);
       nodes[key] = g;
     };
@@ -116,8 +122,9 @@ export function createScene(svg, { onTap }) {
   function burst(key, text) {
     const g = nodes[key];
     if (!g) return;
-    fxG.append(mk("text", { x: g.dataset.x, y: +g.dataset.y - 40, class: "pop" }, text));
-    setTimeout(() => fxG.lastElementChild?.remove(), 1000);
+    const t = mk("text", { x: g.dataset.x, y: +g.dataset.y - 40, class: "pop" }, text);
+    fxG.append(t);
+    setTimeout(() => t.remove(), 1000);
   }
 
   function update(snap, { quiet = false } = {}) {
@@ -149,7 +156,7 @@ export function createScene(svg, { onTap }) {
   svg.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
     const g = e.target.closest(".cr");
-    if (g) { e.preventDefault(); onTap(g.dataset.kind, g.dataset.key, g); }
+    if (g && !g.classList.contains("off")) { e.preventDefault(); onTap(g.dataset.kind, g.dataset.key, g); }
   });
 
   return { build, update, el: (key) => nodes[key], burst };

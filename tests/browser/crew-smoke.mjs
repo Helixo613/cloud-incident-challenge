@@ -77,11 +77,11 @@ if (mode !== "title") {
     const stars = await page.locator("#result-stars [data-on='1']").count();
     results.push(`${id}:${stars}`);
     await checkLayout(`result-${id}`);
-    if (round === 0) await shot("result");
+    if (round === 0) { await page.waitForTimeout(900); await shot("result"); }
     await page.click("[data-nav=next]");
   }
   await page.waitForSelector("#screen-final.is-active");
-  await checkLayout("final"); await shot("final");
+  await checkLayout("final"); await page.waitForTimeout(900); await shot("final");
   console.log("rounds:", results.join(" "), "| grade:", (await page.textContent("#final-grade")).trim());
 }
 console.log(tag, problems.length ? `PROBLEMS:\n - ${problems.join("\n - ")}` : "OK");
