@@ -43,6 +43,10 @@ await checkLayout("howto");
 await page.click("[data-nav=play]");
 await page.waitForSelector("#screen-play.is-active");
 await checkLayout("prep"); await shot("prep");
+const kinds = await page.$$eval("#scene .cr", (n) => n.map((x) => x.dataset.key));
+for (const k of ["users", "lb", "app0", "app3", "cache", "db", "replica", "firewall"]) if (!kinds.includes(k)) problems.push(`scene missing ${k}`);
+const active = await page.$$eval("#scene .cr:not(.off)", (n) => n.length);
+if (active < 5) problems.push(`scene has only ${active} active creatures`);
 
 if (mode !== "title") {
   const results = [];

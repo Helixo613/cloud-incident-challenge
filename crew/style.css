@@ -102,7 +102,12 @@ h2 { font-size: 26px; }
 .cr[data-mood=sweat] .e-sweat, .cr[data-mood=sweat] .m-sweat,
 .cr[data-mood=dizzy] .e-dizzy, .cr[data-mood=dizzy] .m-dizzy,
 .cr[data-mood=dead] .e-dead, .cr[data-mood=dead] .m-dead { display: inline; }
-.cr .lbl { font: 800 11px var(--font); fill: #c8ceff; text-anchor: middle; paint-order: stroke; stroke: #05081c; stroke-width: 3px; }
+.cr .shine { fill: #fff; fill-opacity: .55; stroke: #fff; stroke-opacity: .55; stroke-width: 3.5; stroke-linecap: round; } .cr ellipse.shine { stroke: none; }
+.cr .cheek { fill: #ff7a9c; opacity: .55; } .cr[data-mood=dead] .cheek { display: none; }
+.cr .gr { fill: #05081c; opacity: .35; } .cr .pill { fill: #0b1030; fill-opacity: .82; stroke: #3a49a8; stroke-width: 1.2; }
+.cr[data-mood=happy] .e-happy, .cr[data-mood=sweat] .e-sweat { animation: blink 4.2s infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.cr .lbl { font: 800 11px var(--font); fill: #e3e7ff; text-anchor: middle; stroke: none; }
 .cr .idle { transform-box: fill-box; transform-origin: center; animation: bob 2.4s ease-in-out infinite; }
 .cr[data-mood=sweat] .idle { animation: jig .5s ease-in-out infinite; } .cr[data-mood=dizzy] .idle { animation: jig .22s ease-in-out infinite; }
 .cr[data-mood=dead] .idle { animation: none; } .cr[data-mood=dead] .sh { filter: grayscale(1) brightness(.6); }
