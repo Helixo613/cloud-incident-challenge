@@ -1,5 +1,6 @@
 import { CONFIG as C } from "./config.js";
 import { clueFor, tickerLine } from "./content.js";
+import * as fx from "./fx.js";
 import { createScene } from "./scene.js";
 import { act, buy, diagnose, finishRound, gradeFor, newShift, preview, shiftOver, startRound, tick } from "./sim.js";
 import * as ui from "./ui.js";
@@ -52,9 +53,11 @@ function step() {
   const wasOnset = round.onset;
   snap = tick(round, shift);
   scene.update(snap);
+  if (snap.served > 0.5 && !(round.t % 2)) fx.flyCoin(scene.el("lb"), document.querySelector("#hud-budget"));
   ui.renderHud(hudState());
   ui.setTicker(tickerLine(snap, round.has.monitoring, round.id));
   if (!wasOnset && round.onset) {
+    fx.sfx("alarm"); fx.haptic([120, 60, 120]); fx.shake(stageEl);
     ui.banner(`INCIDENT · ROUND ${shift.round + 1}`);
     ui.renderLive(round);
     if (shift.round === 0) ui.coach("Tap a service in the datacenter to inspect it. Then press Diagnose.");
@@ -68,7 +71,7 @@ function end() {
   stop();
   ui.setAlarm(false);
   const res = finishRound(round, shift);
-  resultTimer = setTimeout(() => { resultTimer = null; ui.showResult(res, shift); }, 700);
+  resultTimer = setTimeout(() => { resultTimer = null; fx.sfx(res.count >= 2 ? "star" : "bad"); fx.haptic(res.count >= 2 ? 30 : [80, 40, 80]); ui.showResult(res, shift); }, 700);
 }
 
 function refreshBubble() {
@@ -92,18 +95,22 @@ async function copyResult() {
 
 ui.bind({
   nav: (id) => {
+    fx.sfx("tap");
+    if (id === "mute") { fx.setMuted(!fx.isMuted()); ui.setMuteLabel(fx.isMuted()); }
     if (id === "start") ui.showScreen("howto");
     if (id === "play") newRun();
     if (id === "menu") { menuOpen = true; ui.setMenu(true); }
     if (id === "resume") { menuOpen = false; ui.setMenu(false); }
     if (id === "restart") { menuOpen = false; ui.setMenu(false); newRun(); }
     if (id === "home") { stop(); menuOpen = false; ui.setMenu(false); ui.showScreen("title"); }
-    if (id === "next") { if (shiftOver(shift)) ui.showFinal(shift, gradeFor(shift)); else prep(); }
+    if (id === "next") { if (shiftOver(shift)) { fx.sfx("win"); ui.showFinal(shift, gradeFor(shift)); } else prep(); }
     if (id === "again") newRun();
     if (id === "copy") copyResult();
   },
   buy: (item) => {
-    if (!buy(shift, item).ok) return;
+    const r = buy(shift, item);
+    fx.sfx(r.ok ? "buy" : "deny");
+    if (!r.ok) return;
     scene.build(shift.owned);
     scene.update(preview(startRound(shift)), { quiet: true });
     ui.renderHud(hudState());
@@ -117,13 +124,17 @@ ui.bind({
   },
   hyp: (id) => {
     if (!round || round.done) return;
-    diagnose(round, id);
+    const r = diagnose(round, id);
+    fx.sfx(r.correct ? "good" : "bad");
     ui.renderLive(round);
   },
   act: (id) => {
     if (!round || round.done) return;
-    act(round, shift, id);
+    const r = act(round, shift, id);
+    fx.sfx(r.ok ? "buy" : "deny");
     ui.renderLive(round);
     ui.renderHud(hudState());
   },
 });
+document.addEventListener("pointerdown", fx.unlock, { once: true });
+ui.setMuteLabel(fx.isMuted());
