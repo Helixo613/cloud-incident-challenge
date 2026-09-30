@@ -20,6 +20,8 @@ const NODES = [
 const NAME = { users: "USERS", firewall: "FIREWALL", lb: "BALANCER", cache: "CACHE", db: "DATABASE", replica: "REPLICA" };
 const LABEL = { users: "Users", firewall: "Firewall", lb: "Load balancer", app: "App server", cache: "Cache", db: "Database", replica: "Replica" };
 const REASON_TEXT = { "app-overload": "timeout", "bad-deploy": "HTTP 500", "db-down": "no DB", "db-overload": "DB slow", "rate-limit": "throttled", attack: "bot traffic" };
+// Without Monitoring the floating label is generic: it must not name the cause.
+const REASON_GENERIC = { "app-overload": "slow", "bad-deploy": "error", "db-down": "down", "db-overload": "slow", "rate-limit": "slow", attack: "error" };
 // Tap area per kind (viewBox units): half width, and how far below the anchor it reaches.
 const HIT_W = { users: 36, firewall: 36, lb: 36, app: 39, cache: 38, db: 38, replica: 38 };
 // Flag nudges and max widths (viewBox units) so neighbouring flags never touch.
@@ -121,11 +123,11 @@ function flagState(kind, s, ctx) {
     case "users": return [...(s.avail >= 0.95 ? ["OK", "ok"] : s.avail >= 0.6 ? ["DEGRADED", "warn"] : ["OUTAGE", "bad"]), pct(s.avail)];
     case "firewall": {
       const pass = s.block ? C.blockPass : C.firewallPass, blocked = s.badIn / pass - s.badIn;
-      return [...(s.block ? ["BLOCKING", "ok"] : s.badIn > 1 ? ["BOTS PASSING", "warn"] : ["OK", "ok"]), `${Math.round(blocked)}/${Math.round(s.badIn)}`];
+      return [...(s.block ? ["BLOCKING", "ok"] : s.badIn > 1 ? [ctx.m ? "BOTS PASSING" : "BUSY", "warn"] : ["OK", "ok"]), `${Math.round(blocked)}/${Math.round(s.badIn)}`];
     }
     case "lb": return [...(s.rateLimit ? ["LIMITING", "warn"] : ["OK", "ok"]), `${Math.round(s.incoming)}/s`];
     case "app": return [...(ctx.m && s.deployBad ? ["ERRORS", "bad"] : load(s.appLoad)), pct(s.appLoad)];
-    case "cache": return [...(s.hit < 0.1 ? ["COLD", "bad"] : s.hit < 0.5 ? ["WARMING", "warn"] : ["OK", "ok"]), pct(s.hit)];
+    case "cache": return [...(s.hit < 0.1 ? [ctx.m ? "COLD" : "OVERLOADED", "bad"] : s.hit < 0.5 ? [ctx.m ? "WARMING" : "BUSY", "warn"] : ["OK", "ok"]), pct(s.hit)];
     case "db": return s.dbDown ? ["OFFLINE", "bad", "—"] : [...load(s.dbLoad ?? 0), pct(s.dbLoad ?? 0)];
     case "replica": return !s.replica ? ["PROMOTED", "info", ""] : s.dbDown ? ["ACTIVE", "warn", ""] : ["STANDBY", "info", ""];
     default: return ["OK", "ok", ""];
@@ -201,8 +203,10 @@ export function createScene(svg, { onTap }) {
     let [word, level, num] = state;
     let n = owned.monitoring ? num : "";
     // Tight screens: app flags are 50 px apart, so they drop to a short word (name over "OK 61%").
-    if (f.kind === "app" && K > 1.1) word = { BUSY: "BSY", OVERLOADED: "MAX", ERRORS: "ERR" }[word] || word;
-    if (K > 1.1 && n && word.length + n.length < 11) { word += ` ${n}`; n = ""; }   // compact: one short second line
+    if (f.kind === "app" && K > 1.1) word = { OVERLOADED: "OVERLOAD" }[word] || word;
+    if (K > 1.1 && n) {   // compact: one short second line; app flags drop a number that would not fit
+      if (word.length + n.length < 11) { word += ` ${n}`; n = ""; } else if (f.kind === "app") n = "";
+    }
     const sig = `${word}|${level}|${n}|${K}`;
     if (sig === f.last) return;
     f.last = sig;
@@ -285,9 +289,10 @@ export function createScene(svg, { onTap }) {
     svg.style.setProperty("--flow", `${Math.max(0.45, Math.min(1.4, 30 / Math.max(snap.good, 1))).toFixed(2)}s`);
     if (quiet) return;
     if (snap.onset && snap.top) {
+      const text = (ctx.m ? REASON_TEXT : REASON_GENERIC)[snap.top];
       const target = { "app-overload": `app${Math.floor(Math.random() * snap.servers)}`, "bad-deploy": "app0", "db-down": "db", "db-overload": "db", "rate-limit": "lb", attack: snap.block ? "lb" : "firewall" }[snap.top];
-      if (target && !nodes[target]?.classList.contains("off")) burst(target, REASON_TEXT[snap.top]);
-      else if (target === "firewall") burst("lb", REASON_TEXT[snap.top]);
+      if (target && !nodes[target]?.classList.contains("off")) burst(target, text);
+      else if (target === "firewall") burst("lb", text);
     }
   }
 

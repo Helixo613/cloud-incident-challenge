@@ -27,6 +27,9 @@ describe("incident data", () => {
         expect(c.lines.length, kind).toBeGreaterThan(0);
       }
     }
+    // Without Monitoring the cache clue must not name the cause.
+    const noMon = clueFor("cache", snap, false).lines.join(" ");
+    expect(noMon).not.toMatch(/cold|hit rate|collapsed/i);
     expect(tickerLine({ ...snap, onset: false }, false, "spike")).toBeTypeOf("string");
     expect(tickerLine(snap, true, "spike")).toBeTypeOf("string");
   });

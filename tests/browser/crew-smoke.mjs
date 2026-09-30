@@ -18,6 +18,17 @@ const page = await ctx.newPage();
 const problems = [];
 page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
 page.on("console", (m) => m.type() === "error" && problems.push(`console: ${m.text()}`));
+// A primary button must be reachable by a real tap: the element at its centre is the button (or inside it).
+async function reachable(sel, where) {
+  const ok = await page.evaluate((s) => {
+    const el = document.querySelector(s); if (!el) return "missing";
+    const b = el.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;
+    if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return "offscreen";
+    const hit = document.elementFromPoint(x, y);
+    return hit && (hit === el || el.contains(hit)) ? "ok" : `covered by ${hit && hit.tagName}#${hit && hit.id}.${hit && hit.className}`;
+  }, sel);
+  if (ok !== "ok") problems.push(`${where}: ${sel} not reachable (${ok})`);
+}
 const tag = `${mode}-${w}x${h}${hostile ? "-hostile" : ""}`;
 const shot = (n) => page.screenshot({ path: `${process.env.SHOTS || "."}/${tag}-${n}.png` });
 
@@ -28,13 +39,20 @@ async function checkLayout(where) {
       .map((e) => [e, e.getBoundingClientRect()])
       .filter(([e, b]) => b.width > 0 && b.height > 0 && (b.width < 47.5 || b.height < 47.5))
       .map(([e, b]) => `${e.tagName}.${e.className}[${e.dataset ? Object.values(e.dataset)[0] : ""}] ${Math.round(b.width)}x${Math.round(b.height)}`);
-    return { overflow: document.documentElement.scrollWidth - innerWidth, small };
+    const objs = [...document.querySelectorAll("#scene .cr:not(.off) .hit")]
+      .map((e) => [e, e.getBoundingClientRect()])
+      .filter(([, b]) => b.width > 0 && (b.width < 43.5 || b.height < 43.5))
+      .map(([e, b]) => `scene ${e.parentNode.dataset.key} ${Math.round(b.width)}x${Math.round(b.height)}`);
+    const sc = document.querySelector(".screen.is-active:not(#screen-play)");   // play screen clips and shakes
+    return { overflow: document.documentElement.scrollWidth - innerWidth, small: small.concat(objs), screenOverflow: sc ? sc.scrollWidth - sc.clientWidth : 0 };
   });
+  if (r.screenOverflow > 0) problems.push(`${where}: active screen scrolls horizontally by ${r.screenOverflow}px`);
   if (r.overflow > 0) problems.push(`${where}: horizontal overflow ${r.overflow}px`);
   for (const s of r.small) problems.push(`${where}: tap target too small: ${s}`);
 }
 
-await page.goto(`${base}?seed=t1&speed=8`);
+const seed = process.env.LONGSEED ? "x".repeat(500) : "t1";
+await page.goto(`${base}?seed=${seed}&speed=8`);
 await page.waitForSelector("#screen-title.is-active");
 await checkLayout("title"); await shot("title");
 await page.click("[data-nav=start]");
@@ -58,12 +76,19 @@ if (mode !== "title") {
         if (await b.count()) await b.first().click();
       }
     }
+    await reachable("[data-go=ready]", `prep-${round}`);
     await page.click("[data-go=ready]");
     await page.waitForSelector("#banner:not([hidden])", { timeout: 30000 });
     const id = await page.getAttribute("#sheet", "data-incident");
+    if (process.env.REDUCED) {
+      const m = await page.evaluate(() => { const s = document.querySelector("#stage"); return [s.classList.contains("shake"), getComputedStyle(s).animationName]; });
+      if (m[0]) problems.push("reduced motion: stage has .shake");
+      if (m[1] !== "none") problems.push(`reduced motion: stage animation-name ${m[1]}`);
+    }
     await checkLayout(`live-${id}`);
     if (round === 0) await shot("incident");
     if (mode === "pro") {
+      await reachable("[data-go=diagnose]", `live-${id}`);
       await page.click("[data-go=diagnose]");
       await page.click(`[data-hyp=${INCIDENTS[id].correct}]`);
       for (const f of [...INCIDENTS[id].fixes, "ratelimit"]) {
@@ -78,6 +103,7 @@ if (mode !== "title") {
     results.push(`${id}:${stars}`);
     await checkLayout(`result-${id}`);
     if (round === 0) { await page.waitForTimeout(900); await shot("result"); }
+    await reachable("[data-nav=next]", `result-${id}`);
     await page.click("[data-nav=next]");
   }
   await page.waitForSelector("#screen-final.is-active");

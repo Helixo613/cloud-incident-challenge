@@ -63,7 +63,7 @@ export function clueFor(kind, s, m) {
       return { lines: [`DATABASE: load ${pct(d)}`, s.hit < 0.3 ? "Almost no cache hits, every read reaches the database" : "The cache absorbs most reads"], gauge: { label: "DB load", value: d } };
     }
     case "cache":
-      return { lines: m ? [`CACHE: hit rate ${pct(s.hit)}`, s.hit < 0.3 ? "Cold: hit rate collapsed" : "Serving most reads"] : [s.hit < 0.3 ? "CACHE: cold, hit rate collapsed" : "CACHE: warm, serving most reads"], gauge: m ? { label: "Hit rate", value: s.hit / 0.6 } : null };
+      return { lines: m ? [`CACHE: hit rate ${pct(s.hit)}`, s.hit < 0.3 ? "Cold: hit rate collapsed" : "Serving most reads"] : [s.hit < 0.3 ? "CACHE: something looks off" : "CACHE: looks normal"], gauge: m ? { label: "Hit rate", value: s.hit / 0.6 } : null };
     case "replica":
       return { lines: [s.dbDown ? "REPLICA: standby copy, can still serve reads" : "REPLICA: in sync with the primary"], gauge: null };
     default:

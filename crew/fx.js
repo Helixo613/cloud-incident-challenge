@@ -17,7 +17,7 @@ export function unlock() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     ac ||= new AC();
-    ac.resume?.();
+    if (ac.state !== "running") ac.resume?.();   // cheap and idempotent: safe to call on every gesture
   } catch {}
 }
 
@@ -35,6 +35,7 @@ const TONES = {
 
 export function sfx(name) {
   if (muted || !ac || document.hidden) return;
+  try { if (ac.state !== "running") ac.resume?.(); } catch {}   // touch phones may suspend it again
   try {
     let t = ac.currentTime;
     for (const [freq, dur, vol] of TONES[name] || []) {
@@ -70,9 +71,11 @@ export function flyCoin(fromEl, toEl) {
   try {
     const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
     const c = document.createElement("div");
+    if (typeof c.animate !== "function") return;
     c.style.cssText = `position:fixed;left:${a.left + a.width / 2 - 6}px;top:${a.top + a.height / 2 - 6}px;width:12px;height:12px;border-radius:50%;background:#f5a524;border:2px solid #ffd27a;box-sizing:border-box;z-index:9;pointer-events:none`;
     document.body.append(c);
     const anim = c.animate([{ transform: "translate(0,0) scale(1)", opacity: 1 }, { transform: `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(.6)`, opacity: 0.2 }], { duration: 650, easing: "ease-in" });
     anim.onfinish = () => c.remove();
-  } catch {}
+    anim.oncancel = () => c.remove();
+  } catch { document.querySelectorAll("body > div[style*='z-index:9']").forEach((e) => e.remove()); }
 }

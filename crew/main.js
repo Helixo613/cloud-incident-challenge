@@ -15,7 +15,7 @@ const scene = createScene(document.querySelector("#scene"), { onTap });
 
 const randomSeed = () => Math.random().toString(36).slice(2, 7);
 const hudState = () => ({
-  budget: shift.budget,
+  budget: shift.budget, monitoring: shift.owned.monitoring > 0,
   avail: snap ? snap.avail : 1,
   label: round && timer ? `R${shift.round + 1}/5 · ${Math.floor(round.t / 60)}:${String(round.t % 60).padStart(2, "0")}` : `Round ${Math.min(shift.round + 1, 5)}/5`,
 });
@@ -40,6 +40,7 @@ function prep() {
 }
 
 function ready() {
+  if (timer) return;
   round = startRound(shift);
   snap = preview(round);
   ui.coach(null);
@@ -90,8 +91,24 @@ async function copyResult() {
   const stars = shift.results.reduce((n, x) => n + x.count, 0);
   const text = `Cloud Crew: On-Call · grade ${gradeFor(shift)} · ${stars}/15★ · seed ${shift.seed} · ${location.origin}${location.pathname}?seed=${encodeURIComponent(shift.seed)}`;
   try { await navigator.clipboard.writeText(text); document.querySelector("#btn-copy").textContent = "Copied!"; }
-  catch { document.querySelector("#btn-copy").textContent = text; }
+  catch {
+    const box = document.querySelector("#copy-fallback");
+    box.value = text; box.hidden = false; box.focus(); box.select();
+  }
 }
+
+let menuFrom = null;
+function openMenu() {
+  menuFrom = document.activeElement;
+  menuOpen = true; ui.setMenu(true);
+  document.querySelector("#menu [data-nav=resume]")?.focus();
+}
+function closeMenu(restoreFocus = true) {
+  menuOpen = false; ui.setMenu(false);
+  if (restoreFocus && menuFrom && menuFrom.isConnected) menuFrom.focus();
+  menuFrom = null;
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && menuOpen) closeMenu(); });
 
 ui.bind({
   nav: (id) => {
@@ -99,10 +116,10 @@ ui.bind({
     if (id === "mute") { fx.setMuted(!fx.isMuted()); ui.setMuteLabel(fx.isMuted()); }
     if (id === "start") ui.showScreen("howto");
     if (id === "play") newRun();
-    if (id === "menu") { menuOpen = true; ui.setMenu(true); }
-    if (id === "resume") { menuOpen = false; ui.setMenu(false); }
-    if (id === "restart") { menuOpen = false; ui.setMenu(false); newRun(); }
-    if (id === "home") { stop(); menuOpen = false; ui.setMenu(false); ui.showScreen("title"); }
+    if (id === "menu") openMenu();
+    if (id === "resume") closeMenu();
+    if (id === "restart") { closeMenu(false); newRun(); }
+    if (id === "home") { stop(); closeMenu(false); ui.showScreen("title"); }
     if (id === "next") { if (shiftOver(shift)) { fx.sfx("win"); ui.showFinal(shift, gradeFor(shift)); } else prep(); }
     if (id === "again") newRun();
     if (id === "copy") copyResult();
@@ -136,5 +153,6 @@ ui.bind({
     ui.renderHud(hudState());
   },
 });
-document.addEventListener("pointerdown", fx.unlock, { once: true });
+// Touch phones do not treat pointerdown as an audio activation; touchend/click are. unlock() is idempotent.
+for (const ev of ["pointerdown", "touchend", "click"]) document.addEventListener(ev, fx.unlock, { passive: true });
 ui.setMuteLabel(fx.isMuted());

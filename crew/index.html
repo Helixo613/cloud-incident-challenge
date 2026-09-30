@@ -39,12 +39,12 @@
       <div id="banner" hidden></div>
       <span class="brand">CLOUD CREW</span>
       <div class="pill gold" id="hud-budget">$120</div>
-      <div id="hud-avail"><span id="hud-meter" class="meter"><i></i></span><b id="hud-avail-num">100%</b></div>
+      <div id="hud-avail"><span id="hud-meter" class="meter"><i></i></span><b id="hud-avail-num">100%</b><span id="hud-mon" hidden>MONITORING</span></div>
       <div class="pill" id="hud-round">Round 1/5</div>
       <button class="icon-btn" data-nav="menu" aria-label="Menu"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </header>
     <div id="stage">
-      <svg id="scene" viewBox="0 -18 360 388" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Your datacenter"></svg>
+      <svg id="scene" viewBox="0 -18 360 388" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Your datacenter: select a service to inspect it"></svg>
       <div id="bubble" hidden></div>
       <div id="ticker">All quiet…</div>
     </div>
@@ -75,12 +75,13 @@
       <ul id="final-rounds" class="rounds"></ul>
       <p class="seed">Seed <b id="final-seed"></b></p>
       <button class="btn go" data-nav="copy" id="btn-copy">Copy result</button>
+      <input id="copy-fallback" class="copy-fallback" readonly hidden aria-label="Result text to copy">
       <button class="btn" data-nav="again">Play again</button>
       <a class="btn ghost" href="../">Try the 3D sandbox</a>
     </div>
   </section>
 
-  <div id="menu" class="modal" hidden>
+  <div id="menu" class="modal" hidden role="dialog" aria-modal="true" aria-label="Paused">
     <div class="panel center">
       <h2>Paused</h2>
       <button class="btn go" data-nav="resume">Resume</button>

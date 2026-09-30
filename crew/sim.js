@@ -41,7 +41,7 @@ export function startRound(shift) {
     flags: { deployBad: false, rollbackAt: null, dbDown: false, dbBackAt: null, cacheCold: false, warmFrom: null, rateLimit: false, block: false },
     stable: 0, mitigatedAt: null, availSum: 0, availN: 0,
     seq: 0, diagnosis: null, diagSeq: null, firstFixSeq: null,
-    earned: 0, spent: 0, snap: null,
+    earned: 0, spent: 0, snap: null, log: [],
   };
 }
 
@@ -146,6 +146,7 @@ export function act(r, shift, id) {
   shift.budget -= a.cost;
   r.spent += a.cost;
   if (r.firstFixSeq == null) r.firstFixSeq = ++r.seq;
+  r.log.push({ id, t });
   if (id === "scale") r.extra.push(t + C.scaleDelay);
   if (id === "restart") { f.dbDown = true; f.dbBackAt = t + C.restartSeconds; }
   if (id === "failover") { f.dbDown = true; f.dbBackAt = t + C.failoverSeconds; r.has.replica = false; shift.owned.replica = 0; }
@@ -178,7 +179,7 @@ export function finishRound(r, shift) {
   };
   const res = {
     id: r.id, n: r.n, avg, stars, count: +stars.avail + +stars.fast + +stars.diag,
-    earned: r.earned, spent: r.spent, diagnosis: r.diagnosis, mitigatedAt: r.mitigatedAt, onsetAt: r.onsetAt,
+    earned: r.earned, spent: r.spent, log: r.log, top: (r.snap && r.snap.top) || null, diagnosis: r.diagnosis, mitigatedAt: r.mitigatedAt, onsetAt: r.onsetAt,
   };
   shift.results.push(res);
   shift.round += 1;

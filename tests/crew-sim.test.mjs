@@ -169,6 +169,15 @@ describe("diagnosis and stars", () => {
     while (!r.done) tick(r, shift);
     expect(finishRound(r, shift).stars.diag).toBe(false);
   });
+  it("records the actions taken, in order, and hands them to the result", () => {
+    const shift = newShift("log"); const r = startRound(shift);
+    while (!r.onset) tick(r, shift);
+    act(r, shift, "rollback"); act(r, shift, "scale");
+    expect(act(r, shift, "nonsense").ok).toBe(false);
+    expect(r.log.map((x) => x.id)).toEqual(["rollback", "scale"]);
+    while (!r.done) tick(r, shift);
+    expect(finishRound(r, shift).log).toHaveLength(2);
+  });
   it("allows one diagnosis, and only after the incident starts", () => {
     const shift = newShift("d"); const r = startRound(shift);
     expect(diagnose(r, "capacity").ok).toBe(false);      // nothing to diagnose yet

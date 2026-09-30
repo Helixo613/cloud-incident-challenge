@@ -9,7 +9,8 @@ export function showScreen(name) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("is-active", s.id === `screen-${name}`));
 }
 
-export function renderHud({ budget, avail, label }) {
+export function renderHud({ budget, avail, label, monitoring }) {
+  $("#hud-mon").hidden = !monitoring;
   const b = $("#hud-budget");
   b.textContent = money(budget);
   b.classList.toggle("neg", budget < 0);
@@ -21,6 +22,14 @@ export function renderHud({ budget, avail, label }) {
 }
 
 export function setMenu(open) { $("#menu").hidden = !open; }
+
+// Show a "more" hint while cards remain below the fold of the sheet.
+export function updateMore() {
+  const b = $("#sheet-body");
+  $("#sheet").classList.toggle("more", b.scrollHeight - b.scrollTop - b.clientHeight > 6);
+}
+$("#sheet-body").addEventListener("scroll", () => updateMore(), { passive: true });
+if (typeof ResizeObserver === "function") new ResizeObserver(() => updateMore()).observe($("#sheet-body"));
 
 export function setMuteLabel(muted) {
   for (const id of ["#btn-mute", "#btn-mute-title"]) $(id).textContent = muted ? "Sound: off" : "Sound: on";
@@ -58,6 +67,7 @@ export function renderPrep(shift) {
     return `<button class="card shop" data-buy="${id}" ${maxed || poor ? "disabled" : ""}><span class="tx"><b>${u.name}${count}</b><small>${u.note}</small></span><span class="price">${tag}</span></button>`;
   }).join("");
   $("#sheet-foot").innerHTML = `<button class="btn go" data-go="ready">Ready · start round ${shift.round + 1}</button>`;
+  updateMore();
 }
 
 export function renderLive(round, diagnosing = false) {
@@ -71,6 +81,7 @@ export function renderLive(round, diagnosing = false) {
     body.className = "";
     body.innerHTML = round.hypOrder.map((h) => `<button class="card" data-hyp="${h}"><span class="tx"><b>${HYPOTHESES[h]}</b></span></button>`).join("");
     foot.innerHTML = `<button class="btn ghost" data-go="cancel">Back</button>`;
+    updateMore();
     return;
   }
   $("#sheet-title").textContent = round.onset ? "Incident · response" : "Monitoring traffic…";
@@ -86,6 +97,7 @@ export function renderLive(round, diagnosing = false) {
   }).join("");
   const canDiagnose = round.onset && !round.diagnosis;
   foot.innerHTML = chip + `<button class="btn alt" data-go="diagnose" ${canDiagnose ? "" : "disabled"}>Diagnose the cause</button>`;
+  updateMore();
 }
 
 let bannerTimer, coachTimer;
@@ -125,8 +137,12 @@ export function showResult(res, shift) {
   const d = DEBRIEF[res.id];
   $("#result-kicker").textContent = `Round ${res.n + 1} · ${d.title}`;
   $("#result-title").textContent = res.count === 3 ? "Flawless recovery" : res.count === 2 ? "Solid recovery" : res.count === 1 ? "Rough recovery" : "Major outage";
-  $("#result-stars").innerHTML = STARS.map(([k, t]) => `<li data-on="${res.stars[k] ? 1 : 0}"><span class="star">★</span>${t}</li>`).join("");
-  $("#result-body").innerHTML = `<p><b>What happened</b>${d.what}</p><p><b>What a pro does</b>${d.pro}</p>`;
+  $("#result-stars").innerHTML = STARS.map(([k, t]) => `<li data-on="${res.stars[k] ? 1 : 0}"><span class="star" aria-hidden="true">${res.stars[k] ? "★" : "☆"}</span>${t}<span class="sr"> — ${res.stars[k] ? "earned" : "missed"}</span></li>`).join("");
+  // Static strings only: hypothesis/action names come from content.js, never from user input.
+  const diag = res.diagnosis ? `${HYPOTHESES[res.diagnosis]} (${res.diagnosis === INCIDENTS[res.id].correct ? "correct" : "incorrect"})` : "nothing";
+  const fix = res.log && res.log.length ? ACTION_UI[res.log[0].id].name : "none";
+  const rec = res.mitigatedAt != null ? (res.mitigatedAt - res.onsetAt <= 0 ? "Held stable from the start" : `Recovered ${res.mitigatedAt - res.onsetAt} s after the incident began`) : "Not recovered";
+  $("#result-body").innerHTML = `<p><b>What happened</b>${d.what}</p><p><b>What a pro does</b>${d.pro}</p><p><b>What you did</b>You diagnosed: ${diag} · First fix: ${fix} · ${rec}</p>`;
   $("#result-money").textContent = `Earned ${money(res.earned)} · Spent on fixes ${money(res.spent)} · Budget ${money(shift.budget)}`;
   document.querySelector("#screen-result [data-nav=next]").textContent = shiftOver(shift) ? "See final grade" : "Next round";
   showScreen("result");
@@ -138,5 +154,7 @@ export function showFinal(shift, grade) {
   $("#final-summary").textContent = `${stars} of 15 stars · budget ${money(shift.budget)}${shift.budget < 0 ? " (in the red — costs a grade)" : ""}`;
   $("#final-rounds").innerHTML = shift.results.map((r) => `<li><span>${DEBRIEF[r.id].title}</span><span>${"★".repeat(r.count)}${"☆".repeat(3 - r.count)}</span></li>`).join("");
   $("#final-seed").textContent = shift.seed;
+  $("#btn-copy").textContent = "Copy result";
+  $("#copy-fallback").hidden = true;
   showScreen("final");
 }
