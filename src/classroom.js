@@ -5,7 +5,8 @@ import { i18n } from "./i18n.js";
 import { Service } from "./entities/Service.js";
 import { createConnection, createService } from "./sim/topology.js";
 import { getRollingGoodput } from "./core/metrics.js";
-import { resetGame } from "../game.js";
+import { canStartTraffic, getChallengeGuide } from "./classroom-guide.js";
+import { camera, cameraTarget, resetGame } from "../game.js";
 
 const MAX_SECONDS = 420;
 const PHASES = [
@@ -14,7 +15,7 @@ const PHASES = [
     { name: "Incident", goal: "Use Monitoring to identify the failed service, restore it, and serve 8 more requests.", hint: "A service has gone offline. Inspect Monitoring before using Restore Database." },
 ];
 
-const run = { active: false, phase: 0, phaseAt: 0, startProcessed: 0, startFailed: 0, inspectedTraffic: false, inspectedMonitor: false, restored: false, restoredAt: 0, lastPaint: -1, note: "" };
+const run = { active: false, live: false, phase: 0, phaseAt: 0, startProcessed: 0, startFailed: 0, inspectedTraffic: false, inspectedMonitor: false, restored: false, restoredAt: 0, lastPaint: -1, note: "", next: "" };
 const el = (id) => document.getElementById(id);
 const failed = () => Object.values(STATE.failures).reduce((sum, count) => sum + count, 0);
 const node = (name) => STATE.services.find((service) => service.classroomName === name);
@@ -54,9 +55,9 @@ function phaseStart(index) {
         db.isDisabled = true;
         db.mesh.material.opacity = 0.3;
         db.mesh.material.transparent = true;
-        run.note = "Incident alert: requests are failing. Inspect Monitoring to identify the offline service.";
+        run.note = "MISSION 2 COMPLETE · Requests are failing. Inspect Monitoring to find the offline service.";
     } else {
-        run.note = index === 1 ? "Traffic increased to 5 requests per second. Add capacity before judging the result." : "";
+        run.note = index === 1 ? "MISSION 1 COMPLETE · Traffic has surged to 5 requests per second. Add capacity." : "";
     }
     render();
 }
@@ -71,7 +72,7 @@ function finish(timedOut = false) {
     el("challenge-end-summary").innerHTML = `
         <p><strong>Availability:</strong> ${availability(served, dropped)}% (${served} served / ${served + dropped} requests)</p>
         <p><strong>Budget remaining:</strong> $${Math.floor(STATE.money)}</p>
-        <p><strong>Objectives completed:</strong> ${completed}/3 — ${PHASES.slice(0, completed).map((p) => p.name).join(", ") || "none"}</p>
+        <p><strong>Objectives completed:</strong> ${completed}/3 — ${PHASES.slice(0, completed).map((p) => p.name).join(", ") || "none"}</p>${timedOut ? `<p><strong>You were stuck on:</strong> ${run.next}</p>` : ""}
         <p>Load balancing routes work to compute; the database serves reads. Monitoring exposes traffic and outages. Capacity absorbs a spike, and incident response restores a failed dependency. Availability counts successful requests against all attempts.</p>`;
     el("challenge-end").hidden = false;
 }
@@ -82,13 +83,27 @@ function render() {
     const served = STATE.requestsProcessed - run.startProcessed;
     const dropped = failed() - run.startFailed;
     const goodput = getRollingGoodput();
+    const primary = node("Primary Compute");
+    const backup = node("Backup Compute");
+    const db = node("Database");
+    const connected = linked(primary.id, db.id);
+    const capacity = primary.tier > 1 || !!(backup && linked(node("Load Balancer").id, backup.id) && linked(backup.id, db.id));
+    const guide = getChallengeGuide({ phase: run.phase, connected, monitoring: !!node("Monitoring"), inspectedMonitor: run.inspectedMonitor, live: run.live, inspectedTraffic: run.inspectedTraffic, served, capacity, backup: !!backup, backupFromLb: !!(backup && linked(node("Load Balancer").id, backup.id)), backupToDb: !!(backup && linked(backup.id, db.id)), restored: run.restored });
+    run.next = guide.title;
     el("challenge-phase").textContent = `${run.phase + 1}/3 · ${phase.name}`;
     el("challenge-goal").textContent = phase.goal;
-    el("challenge-hint").textContent = run.note || phase.hint;
-    el("challenge-clock").textContent = `${Math.floor(STATE.elapsedGameTime / 60)}:${String(Math.floor(STATE.elapsedGameTime % 60)).padStart(2, "0")} / 7:00`;
+    el("challenge-step-title").textContent = guide.title;
+    el("challenge-step-detail").textContent = guide.detail;
+    el("challenge-step-count").textContent = `STEP ${Math.min(guide.progress + 1, guide.total)} OF ${guide.total}`;
+    el("challenge-hint").hidden = !run.note;
+    el("challenge-hint").textContent = run.note;
+    el("challenge-clock").textContent = run.live ? `${Math.floor(STATE.elapsedGameTime / 60)}:${String(Math.floor(STATE.elapsedGameTime % 60)).padStart(2, "0")} / 7:00` : "PAUSED / 7:00";
     el("challenge-budget").textContent = `$${Math.floor(STATE.money)}`;
-    el("challenge-traffic").textContent = `${STATE.currentRPS} RPS · ${served} served · ${dropped} failed`;
+    el("challenge-cost-note").textContent = run.live ? "UPKEEP ACTIVE · REQUESTS EARN" : "SETUP PAUSED · NO UPKEEP";
+    el("challenge-traffic").textContent = run.live ? `${STATE.currentRPS} RPS · ${served} served · ${dropped} failed` : "TRAFFIC OFFLINE · READY WHEN YOU ARE";
     el("challenge-availability").textContent = `Availability ${availability(served, dropped)}% · recent goodput ${goodput === null ? "—" : `${Math.round(goodput * 100)}%`}`;
+    document.querySelectorAll(".challenge-mission-rail span").forEach((step, index) => { step.classList.toggle("is-current", index === run.phase); step.classList.toggle("is-complete", index < run.phase); });
+    document.querySelectorAll("[data-challenge-focus]").forEach((control) => control.classList.toggle("is-next", control.dataset.challengeFocus === guide.focus));
     el("challenge-monitor").hidden = !run.inspectedMonitor;
     if (run.inspectedMonitor) {
         el("challenge-monitor").textContent = STATE.services.filter((service) => service.type !== "monitor")
@@ -96,9 +111,18 @@ function render() {
             .join(" · ");
     }
     el("challenge-restore").disabled = run.phase !== 2 || !run.inspectedMonitor || run.restored;
+    el("challenge-restore").hidden = run.phase !== 2;
     el("challenge-add-monitor").disabled = !!node("Monitoring");
+    el("challenge-add-monitor").hidden = run.phase !== 0 || !!node("Monitoring");
     el("challenge-add-backup").disabled = !!node("Backup Compute");
-    el("challenge-upgrade").disabled = node("Primary Compute")?.tier > 1;
+    el("challenge-add-backup").hidden = run.phase !== 1 || !!backup;
+    el("challenge-upgrade").disabled = primary.tier > 1;
+    el("challenge-upgrade").hidden = run.phase !== 1 || primary.tier > 1;
+    el("challenge-link-controls").hidden = run.phase === 2 || (run.phase === 0 && connected) || (run.phase === 1 && (!backup || capacity));
+    el("challenge-inspect-traffic").hidden = !run.live || (run.phase === 0 && run.inspectedTraffic);
+    el("challenge-inspect-monitor").hidden = run.phase === 1 || run.inspectedMonitor;
+    el("challenge-launch").hidden = run.phase !== 0 || run.live;
+    el("challenge-launch").disabled = !canStartTraffic({ connected, monitoring: !!node("Monitoring"), inspectedMonitor: run.inspectedMonitor });
 }
 
 function challengeTick() {
@@ -158,23 +182,46 @@ function startChallenge() {
     createConnection("internet", node("Load Balancer").id);
     createConnection(node("Load Balancer").id, node("Primary Compute").id);
     refreshNodes();
+    // Desktop: slide the board right so the Internet node clears the left brief panel.
+    // Absolute (not +=) so restarts don't drift; 40 = default isometric eye offset.
+    const shift = window.innerWidth >= 1000 ? 6 : 0;
+    cameraTarget.set(-shift, 0, shift);
+    camera.position.set(cameraTarget.x + 40, 40, cameraTarget.z + 40);
     el("challenge-from").value = node("Primary Compute").id;
     el("challenge-to").value = node("Database").id;
-    Object.assign(run, { active: true, phase: 0, phaseAt: 0, startProcessed: 0, startFailed: 0, inspectedTraffic: false, inspectedMonitor: false, restored: false, restoredAt: 0, lastPaint: -1, note: "" });
-    window.setTimeScale(1);
+    Object.assign(run, { active: true, live: false, phase: 0, phaseAt: 0, startProcessed: 0, startFailed: 0, inspectedTraffic: false, inspectedMonitor: false, restored: false, restoredAt: 0, lastPaint: -1, note: "" });
+    window.setTimeScale(0);
     render();
 }
 
 function challengeAction(action) {
     if (!run.active) return;
+    if (action === "launch" && !run.live) {
+        const ready = canStartTraffic({ connected: linked(node("Primary Compute").id, node("Database").id), monitoring: !!node("Monitoring"), inspectedMonitor: run.inspectedMonitor });
+        if (ready) {
+            run.live = true;
+            window.setTimeScale(1);
+            run.note = "APP ONLINE · The clock and service upkeep have started. Watch the requests arrive.";
+        }
+    }
     if (action === "monitor") run.note = place("Monitoring", "monitor", 0, 14) ? "Monitoring placed. Inspect it to see service health." : "Not enough budget for Monitoring.";
-    if (action === "backup") run.note = place("Backup Compute", "compute", -8, -12) ? "Backup placed. Connect Load Balancer → Backup Compute → Database." : "Not enough budget for backup Compute.";
+    if (action === "backup") {
+        if (place("Backup Compute", "compute", -8, -12)) {
+            el("challenge-from").value = node("Load Balancer").id;
+            el("challenge-to").value = node("Backup Compute").id;
+            run.note = "Backup placed. Connect Load Balancer → Backup Compute → Database.";
+        } else run.note = "Not enough budget for backup Compute.";
+    }
     if (action === "connect") {
         const from = el("challenge-from").value;
         const to = el("challenge-to").value;
         const before = STATE.connections.length;
         createConnection(from, to);
         run.note = STATE.connections.length > before ? "Connection created. Traffic can use this route." : "No connection made. Check direction or choose a valid route.";
+        if (run.phase === 1 && linked(node("Load Balancer").id, node("Backup Compute")?.id)) {
+            el("challenge-from").value = node("Backup Compute").id;
+            el("challenge-to").value = node("Database").id;
+        }
     }
     if (action === "upgrade") {
         const compute = node("Primary Compute");
@@ -183,8 +230,10 @@ function challengeAction(action) {
         run.note = compute.tier > oldTier ? "Primary Compute upgraded. Watch whether it handles the spike." : "Upgrade unavailable at this budget.";
     }
     if (action === "traffic") {
-        run.inspectedTraffic = true;
-        run.note = `Traffic: ${STATE.currentRPS} READ requests/second; ${STATE.requestsProcessed} served and ${failed()} failed so far.`;
+        if (run.live) {
+            run.inspectedTraffic = true;
+            run.note = `Traffic: ${STATE.currentRPS} READ requests/second; ${STATE.requestsProcessed} served and ${failed()} failed so far.`;
+        } else run.note = "Traffic is paused. Complete the setup steps, then start traffic.";
     }
     if (action === "monitoring") {
         if (!node("Monitoring")) run.note = "Place Monitoring first to unlock service health.";

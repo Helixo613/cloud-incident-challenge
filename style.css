@@ -17,47 +17,96 @@ body {
   #main-menu-modal h1 { margin-top: 0; }
 }
 
-/* Classroom view keeps the simulation board visible on small screens. */
+/* Cloud Crew uses the existing 3D board as its playfield. */
 body.challenge-active > .absolute.top-0.left-0,
 body.challenge-active > .absolute.bottom-6 { display: none !important; }
 
 #challenge-intro[hidden], #challenge-shell[hidden], #challenge-end[hidden],
-#challenge-monitor[hidden] { display: none !important; }
+#challenge-shell [hidden] { display: none !important; }
 .challenge-modal {
   position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
-  overflow-y: auto; padding: 1rem; background: rgba(2, 6, 23, .94); color: #e5e7eb;
+  overflow-y: auto; padding: 1rem; background: rgba(9, 26, 32, .94); color: #173a45;
 }
 .challenge-dialog {
-  width: min(100%, 36rem); padding: 1.5rem; border: 1px solid #38bdf8;
-  border-radius: 1rem; background: #0f172a; line-height: 1.5;
+  box-sizing: border-box; width: min(100%, 38rem); padding: clamp(1.25rem, 4vw, 2.25rem);
+  border: 3px solid #173a45; background: #f4e9cc;
+  background-image: radial-gradient(#785c3120 1px, transparent 1px); background-size: 6px 6px;
+  box-shadow: .55rem .55rem 0 #07171e; line-height: 1.45;
+  font-family: "Trebuchet MS", sans-serif;
 }
-.challenge-dialog h2 { margin: .25rem 0 1rem; color: #7dd3fc; font-size: clamp(1.5rem, 5vw, 2rem); }
-.challenge-dialog p { margin: .65rem 0; }
-.challenge-kicker { color: #67e8f9; font-size: .75rem; font-weight: 700; letter-spacing: .1em; }
+.challenge-dialog h2, .challenge-brief h2, .challenge-next h3 { font-family: Georgia, serif; }
+.challenge-dialog h2 { margin: .45rem 0 .9rem; color: #173a45; font-size: clamp(1.7rem, 5vw, 2.5rem); line-height: 1.13; }
+.challenge-dialog p { margin: .6rem 0; }
+.challenge-kicker { color: #a54030; font: 800 .75rem ui-monospace, monospace; letter-spacing: .1em; }
+.challenge-intro-missions { display: grid; gap: .35rem; margin: 1rem 0; padding: 0; list-style: none; }
+.challenge-intro-missions li { display: flex; gap: .65rem; padding: .55rem .7rem; border-left: .3rem solid #cf6747; background: #fff8e8; }
+.challenge-intro-missions b { min-width: 4.7rem; color: #173a45; }
+.challenge-intro-tip { padding: .6rem .75rem; background: #dcebe2; border: 1px solid #9ab7aa; }
+.challenge-intro-foot { text-align: center; font-size: .8rem; }
 .challenge-dialog button, .challenge-controls button {
-  min-height: 2.75rem; padding: .55rem .75rem; border: 1px solid #38bdf8;
-  border-radius: .5rem; background: #075985; color: white; font-weight: 700;
+  min-height: 2.75rem; padding: .55rem .75rem; border: 2px solid #10323e; border-radius: 0;
+  background: #1d5668; color: #fffaf0; box-shadow: .18rem .18rem 0 #10323e;
+  font: 800 .86rem "Trebuchet MS", sans-serif; cursor: pointer;
 }
-.challenge-dialog button { margin-top: 1rem; width: 100%; }
-.challenge-controls button:disabled { opacity: .45; }
-#challenge-shell { position: fixed; inset: 0; z-index: 20; pointer-events: none; color: #e5e7eb; }
-.challenge-top, .challenge-controls { pointer-events: auto; position: absolute; left: .5rem; right: .5rem; background: rgba(15, 23, 42, .95); border: 1px solid #334155; border-radius: .75rem; padding: .65rem; }
-.challenge-top { top: .5rem; }
-.challenge-top h2 { margin: .1rem 0; color: #facc15; font-size: 1.15rem; }
-.challenge-top p { margin: .25rem 0; font-size: .82rem; line-height: 1.3; }
-#challenge-hint { color: #67e8f9; }
-.challenge-stats { display: flex; justify-content: space-between; gap: .5rem; font: 700 .8rem ui-monospace, monospace; }
-.challenge-controls { bottom: .5rem; max-height: 48vh; overflow-y: auto; }
-.challenge-readout { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem .7rem; font: .76rem ui-monospace, monospace; }
-#challenge-monitor { margin: .35rem 0; color: #5eead4; font-size: .78rem; }
-.challenge-actions, .challenge-connect { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .4rem; }
-.challenge-actions button { flex: 1 1 6rem; font-size: .78rem; line-height: 1.15; }
-.challenge-connect label { flex: 1 1 6rem; font-size: .75rem; }
-.challenge-connect select { display: block; width: 100%; min-height: 2.75rem; border-radius: .5rem; background: #1e293b; border: 1px solid #64748b; color: white; }
-.challenge-connect button { flex: 1 1 6rem; }
-@media (min-width: 768px) {
-  .challenge-top { left: 1rem; right: auto; width: min(34rem, 40vw); padding: 1rem; }
-  .challenge-controls { left: auto; right: 1rem; bottom: 1rem; width: min(35rem, 44vw); max-height: 76vh; padding: 1rem; }
+.challenge-dialog button { margin-top: .7rem; width: 100%; background: #e9b44f; color: #12303a; font-size: 1rem; }
+.challenge-dialog button:hover, .challenge-controls button:not(:disabled):hover { transform: translate(-1px,-1px); box-shadow: .25rem .25rem 0 #10323e; }
+.challenge-controls button:disabled { opacity: .5; cursor: not-allowed; }
+.challenge-dialog button:focus-visible, .challenge-controls button:focus-visible, .challenge-help summary:focus-visible,
+.challenge-connect select:focus-visible { outline: 3px solid #d76b46; outline-offset: 3px; }
+#challenge-shell { position: fixed; inset: 0; z-index: 20; pointer-events: none; color: #173a45; font-family: "Trebuchet MS", sans-serif; }
+.challenge-hud, .challenge-brief, .challenge-controls { box-sizing: border-box; pointer-events: auto; position: absolute; border: 2px solid #173a45; box-shadow: .25rem .25rem 0 #07171e; }
+.challenge-hud { top: .5rem; left: .5rem; right: .5rem; padding: .5rem .65rem; background: #f4e9cc; }
+.challenge-hud-row { display: flex; align-items: center; justify-content: space-between; gap: .35rem; font: 800 .75rem ui-monospace, monospace; }
+.challenge-wordmark { font: 900 1.15rem Georgia, serif; white-space: nowrap; }
+.challenge-wordmark b { color: #bd4c35; }
+#challenge-clock, #challenge-budget { padding: .25rem .35rem; background: #173a45; color: #f8edca; white-space: nowrap; }
+#challenge-budget { background: #d9a537; color: #173a45; }
+.challenge-mission-rail { display: grid; grid-template-columns: repeat(3,1fr); gap: .25rem; margin-top: .4rem; font: 800 .59rem ui-monospace, monospace; letter-spacing: .02em; }
+.challenge-mission-rail span { padding: .25rem .15rem; text-align: center; background: #e0d5b9; color: #65716c; }
+.challenge-mission-rail .is-current { background: #1d5668; color: white; }
+.challenge-mission-rail .is-complete { background: #b6d7be; color: #173a45; }
+.challenge-brief { top: 5.1rem; left: .5rem; right: .5rem; max-height: 26vh; overflow-y: auto; padding: .65rem .75rem; background: #f4e9cc; background-image: radial-gradient(#785c3118 1px, transparent 1px); background-size: 6px 6px; }
+.challenge-brief .challenge-kicker { margin: 0; }
+.challenge-brief h2 { margin: .2rem 0; font-size: 1.3rem; line-height: 1.1; }
+#challenge-goal { display: none; margin: .25rem 0 .5rem; font-size: .84rem; line-height: 1.35; }
+.challenge-next { padding: .6rem .7rem; background: #173a45; color: #fff9e9; border-left: .3rem solid #e9b44f; }
+.challenge-next > span { color: #f9cb71; font: 900 .68rem ui-monospace, monospace; letter-spacing: .1em; }
+.challenge-next h3 { margin: .18rem 0; font-size: 1.13rem; }
+.challenge-next p { margin: 0; font-size: .78rem; line-height: 1.35; }
+#challenge-hint { margin: .5rem 0 0; padding: .4rem .55rem; background: #dcebe2; font-size: .76rem; line-height: 1.3; border-left: .2rem solid #2f786d; }
+.challenge-help { margin-top: .35rem; font-size: .8rem; line-height: 1.4; }
+.challenge-help summary { min-height: 2.75rem; display: flex; align-items: center; color: #175f74; font-weight: 800; cursor: pointer; text-decoration: underline; }
+.challenge-help p { margin: .35rem 0; }
+.challenge-board-tag { position: absolute; left: .6rem; bottom: calc(38vh + 1rem); display: flex; gap: .3rem; color: #f4e9cc; font: 800 .63rem ui-monospace, monospace; letter-spacing: .08em; }
+.challenge-board-tag span { background: #173a45e8; padding: .3rem .45rem; border: 1px solid #c0a874; }
+.challenge-controls { bottom: .5rem; left: .5rem; right: .5rem; max-height: 36vh; overflow-y: auto; padding: .7rem; background: #e9dfc7; }
+.challenge-controls-head { display: flex; justify-content: space-between; align-items: center; gap: .35rem; border-bottom: 2px solid #173a45; padding-bottom: .4rem; font: 900 .68rem ui-monospace, monospace; letter-spacing: .05em; }
+#challenge-cost-note { color: #a54030; text-align: right; font-size: .58rem; }
+.challenge-readout { display: flex; flex-wrap: wrap; gap: .15rem .7rem; margin: .45rem 0; font: 800 .72rem ui-monospace, monospace; }
+#challenge-availability { color: #286558; }
+#challenge-monitor { margin: .35rem 0; padding: .4rem; background: #d3e8d7; font: .75rem ui-monospace, monospace; }
+.challenge-actions, .challenge-connect { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .45rem; }
+.challenge-actions button { flex: 1 1 8rem; }
+.challenge-actions button small { display: block; font: 700 .7rem ui-monospace, monospace; }
+.challenge-connect { padding: .4rem; border: 2px dashed #718b83; }
+.challenge-connect label { flex: 1 1 6rem; font: 800 .68rem ui-monospace, monospace; }
+.challenge-connect select { display: block; box-sizing: border-box; width: 100%; min-height: 2.75rem; margin-top: .2rem; padding: .35rem; border: 2px solid #173a45; border-radius: 0; background: #fff9e9; color: #173a45; font: .82rem "Trebuchet MS", sans-serif; }
+.challenge-connect button { flex: 1 1 8rem; background: #e9b44f; color: #173a45; }
+.challenge-controls .is-next { outline: 3px solid #cf6747; outline-offset: 2px; }
+.challenge-controls button.is-next { background: #e9b44f; color: #173a45; }
+.challenge-controls .challenge-restart { display: block; min-height: 2.75rem; width: 100%; margin-top: .5rem; border: 0; box-shadow: none; background: transparent; color: #386171; font-size: .77rem; text-decoration: underline; }
+@media (min-width: 1024px) {
+  .challenge-hud { top: 1rem; left: 1rem; right: 1rem; padding: .65rem 1rem; }
+  .challenge-wordmark { font-size: 1.45rem; }
+  .challenge-hud-row { font-size: .9rem; }
+  .challenge-mission-rail { font-size: .7rem; }
+  .challenge-brief { top: 6.2rem; left: 1rem; right: auto; width: min(23rem, 31vw); max-height: calc(100vh - 8rem); padding: 1rem; }
+  .challenge-brief h2 { font-size: 1.75rem; }
+  #challenge-goal { display: block; font-size: .94rem; }
+  .challenge-next h3 { font-size: 1.35rem; }
+  .challenge-next p { font-size: .88rem; }
+  .challenge-controls { left: auto; right: 1rem; bottom: 1rem; width: min(24rem, 32vw); max-height: calc(100vh - 7.2rem); padding: .9rem; }
+  .challenge-board-tag { left: calc(min(23rem, 31vw) + 2rem); bottom: 1.5rem; }
 }
 
 #canvas-container {

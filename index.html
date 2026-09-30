@@ -1743,36 +1743,47 @@
   </div>
   <section id="challenge-intro" class="challenge-modal" hidden aria-labelledby="challenge-intro-title">
     <div class="challenge-dialog">
-      <p class="challenge-kicker">CLASSROOM ACTIVITY · 10–12 MINUTES</p>
-      <h2 id="challenge-intro-title">Cloud Incident Challenge</h2>
-      <p>Build a route for a small app, handle a traffic spike, then diagnose and restore a failed database. Your team has its own run in this browser tab. No login or room code.</p>
-      <p>Start with a Load Balancer, Compute, and Database. Use the controls to place services, connect them, inspect traffic and Monitoring, and improve capacity. The simulation runs for up to 7 minutes.</p>
-      <button onclick="startChallenge()">Start challenge</button>
+      <p class="challenge-kicker">CLOUD CREW · 10–12 MINUTE GAME</p>
+      <h2 id="challenge-intro-title">Save the app.</h2>
+      <p>Build a working cloud app, survive a traffic spike, then fix an outage. Clear all three missions before the seven-minute clock ends.</p>
+      <ol class="challenge-intro-missions"><li><b>Launch</b><span>Connect the app.</span></li><li><b>Spike</b><span>Survive the rush.</span></li><li><b>Incident</b><span>Find and fix the failure.</span></li></ol>
+      <p class="challenge-intro-tip">Setup starts paused. Purchases cost money now; the clock and running costs begin when you start traffic.</p>
+      <button onclick="startChallenge()">Enter the network →</button>
+      <p class="challenge-intro-foot">One independent run per browser tab · No login or room code</p>
     </div>
   </section>
 
   <main id="challenge-shell" hidden aria-label="Cloud Incident Challenge controls">
-    <header class="challenge-top">
-      <div><span class="challenge-kicker">CLOUD INCIDENT CHALLENGE</span><h2 id="challenge-phase">1/3 · Launch</h2></div>
-      <div class="challenge-stats"><span id="challenge-clock">0:00 / 7:00</span><span id="challenge-budget">$250</span></div>
-      <p id="challenge-goal"></p>
-      <p id="challenge-hint"></p>
+    <header class="challenge-hud">
+      <div class="challenge-hud-row"><span class="challenge-wordmark">CLOUD <b>CREW</b></span><span id="challenge-clock">PAUSED / 7:00</span><span id="challenge-budget">$250</span></div>
+      <div class="challenge-mission-rail" aria-label="Mission progress"><span>01 LAUNCH</span><span>02 SPIKE</span><span>03 INCIDENT</span></div>
     </header>
+    <section class="challenge-brief" aria-label="Current mission">
+      <p class="challenge-kicker">MISSION BRIEF · <span id="challenge-step-count">STEP 1 OF 5</span></p>
+      <h2 id="challenge-phase">1/3 · Launch</h2>
+      <p id="challenge-goal"></p>
+      <div class="challenge-next"><span>NEXT MOVE</span><h3 id="challenge-step-title"></h3><p id="challenge-step-detail"></p></div>
+      <p id="challenge-hint" hidden aria-live="polite"></p>
+      <details class="challenge-help"><summary>How to play &amp; why money changes</summary><p>Follow the next move and use the controls below. The 3D board shows Internet → Load Balancer → Compute → Database. A missing link stops requests; Monitoring reveals health and load.</p><p>New services and upgrades have one-time prices. Once live, services charge upkeep and successful requests can earn rewards, so your balance can rise or fall. The game clock and upkeep stay paused during setup.</p></details>
+    </section>
+    <div class="challenge-board-tag" aria-hidden="true"><span>LIVE NETWORK</span><span>● SERVICE MAP</span></div>
     <section class="challenge-controls" aria-label="Game actions">
+      <div class="challenge-controls-head"><span>FIELD TOOLS</span><span id="challenge-cost-note">SETUP PAUSED · NO UPKEEP</span></div>
       <div class="challenge-readout"><span id="challenge-traffic"></span><span id="challenge-availability"></span></div>
       <p id="challenge-monitor" hidden aria-live="polite"></p>
-      <div class="challenge-actions">
-        <button id="challenge-add-monitor" onclick="challengeAction('monitor')">Place Monitoring · $75</button>
-        <button id="challenge-add-backup" onclick="challengeAction('backup')">Place backup Compute · $60</button>
-        <button id="challenge-upgrade" onclick="challengeAction('upgrade')">Upgrade Compute · $100</button>
+      <div class="challenge-actions challenge-build-actions">
+        <button id="challenge-add-monitor" data-challenge-focus="monitor" onclick="challengeAction('monitor')">Place Monitoring <small>$75</small></button>
+        <button id="challenge-add-backup" onclick="challengeAction('backup')">Place backup Compute <small>$60</small></button>
+        <button id="challenge-upgrade" data-challenge-focus="upgrade" onclick="challengeAction('upgrade')">Upgrade Compute <small>$100</small></button>
       </div>
-      <div class="challenge-connect"><label>From <select id="challenge-from"></select></label><label>To <select id="challenge-to"></select></label><button onclick="challengeAction('connect')">Connect →</button></div>
-      <div class="challenge-actions">
-        <button onclick="challengeAction('traffic')">Inspect traffic</button>
-        <button onclick="challengeAction('monitoring')">Inspect Monitoring</button>
-        <button id="challenge-restore" onclick="challengeAction('restore')">Restore Database</button>
-        <button onclick="startChallenge()">Restart</button>
+      <div id="challenge-link-controls" class="challenge-connect" data-challenge-focus="connect"><label>From <select id="challenge-from"></select></label><label>To <select id="challenge-to"></select></label><button onclick="challengeAction('connect')">Connect route →</button></div>
+      <div class="challenge-actions challenge-inspect-actions">
+        <button id="challenge-inspect-traffic" data-challenge-focus="traffic" onclick="challengeAction('traffic')">Inspect traffic</button>
+        <button id="challenge-inspect-monitor" data-challenge-focus="monitoring" onclick="challengeAction('monitoring')">Inspect Monitoring</button>
+        <button id="challenge-restore" data-challenge-focus="restore" onclick="challengeAction('restore')">Restore Database</button>
+        <button id="challenge-launch" data-challenge-focus="launch" onclick="challengeAction('launch')">Start traffic →</button>
       </div>
+      <button class="challenge-restart" onclick="startChallenge()">↺ Restart mission run</button>
     </section>
   </main>
 
