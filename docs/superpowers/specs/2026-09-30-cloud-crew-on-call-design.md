@@ -104,17 +104,21 @@ Tap any creature → a **speech bubble** with 1–2 plain-language clues and one
 - With Monitoring: exact numbers, the request-error reason mix, and a one-line log ticker; a radar badge shows on the HUD.
 - Max one gauge and two lines of text at a time. No multi-chart panels.
 
-## 7. Look and feel
+## 7. Look and feel (amended 2026-09-30: owner chose "Isometric Datacenter"; supersedes the earlier cute-character direction)
 
-- **Style:** dark-navy backdrop, saturated flat colours, thick outlines, rounded shapes, sticker shadows. Self-hosted rounded display font (OFL, woff2) with a system-rounded fallback.
-- **Nodes are characters** (machine bodies with eyes/mood, §4 mood thresholds) — not boxes, not bars. Upgrades add a visible accessory. Faces carry meaning (not colour alone) for colour-blind players.
-- **Traffic** is visible: thick tube links, bouncing user blobs, red "!" bursts with the failure reason, coins flying to the budget counter.
-- **Incident drama:** red vignette, slam-in "INCIDENT!" banner, screen shake on a death.
-- **Controls:** chunky pressable buttons with a lip; choices are big cards; actions live in a bottom sheet.
-- **Round map:** a 5-stop path shows shift progress; stars pop with a bounce.
-- **Sound/haptics:** synthesized Web Audio effects and `navigator.vibrate` on hits, mute toggle; no audio files. Honor `prefers-reduced-motion` (no shake/particles). Audio starts only after the first tap (browser autoplay rules) and has a mute toggle.
-- **HUD:** at most three items — budget, availability, round/timer. Everything else is on the board.
-- **First-run coach:** three short tooltips that point at *controls* ("tap a creature to hear it out", "this is where fixes live"). They never name the diagnosis or the fix.
+Professional simulation-game look: it should read as a serious training game about infrastructure, not a kids' game and not a slide deck or dashboard. Reference: `.superpowers/demos/c-isometric.html` (local, not committed).
+
+- **Style:** dark slate backdrop with a faint isometric ground grid; solid isometric blocks with three-tone shading; one orange accent for the primary action; red only for trouble; system UI font (Inter/Segoe/system-ui), tabular numbers. No cartoon faces, no emoji icons, no rounded-"toy" fonts.
+- **Services are isometric objects**, not characters: users plaza, load balancer, app servers (racks, up to 4 slots shown as ground pads when unbuilt), cache, database drum, replica (ghost drum), firewall (gate block). Unbuilt/unowned items are dashed ground pads.
+- **Status shows on the objects**: a floating status flag above each object (name + status). Health changes the object's colour (normal steel/teal/amber → red when overloaded → grey when down) and adds a pulsing glow on the floor under an overloaded or failed object. Moods `happy|sweat|dizzy|dead` remain the internal state names.
+- **Monitoring gates numbers:** without Monitoring, flags show only a status word (OK / BUSY / OVERLOADED / OFFLINE) and colour; with Monitoring they also show exact percentages / req·s⁻¹ / hit rate. (This is the "you are blind without Monitoring" mechanic.)
+- **Traffic** is animated pulses along the cables (dashes), red on the overloaded path; failed requests show a short reason label ("timeout", "no DB") floating up.
+- **Incident drama:** full-width red incident strip with a pulsing dot ("INCIDENT · ROUND n") and a red glow at the screen edges; brief screen shake on a failure (respects reduced-motion). No tilted stickers.
+- **Controls:** dark cards with a cost chip in orange; primary action (Ready / Diagnose) in orange with a pressable lip; choices are big cards; actions live in the bottom sheet. No emoji on buttons — text only.
+- **HUD:** compact bar: brand, segmented uptime bar, uptime %, budget, round/timer, menu.
+- **Sound/haptics:** synthesized Web Audio effects and `navigator.vibrate`, mute toggle (text "Sound: on/off"); no audio files. Honor `prefers-reduced-motion`. Audio starts only after the first tap.
+- **Voice:** neutral professional status text ("APP-2: CPU saturated, requests queueing"), not first-person character speech.
+- **First-run coach:** short hint line at the top of the sheet that points at *controls*, never names the diagnosis or the fix.
 
 ## 8. Architecture
 

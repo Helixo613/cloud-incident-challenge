@@ -1876,6 +1876,12 @@ rtk git add crew tests
 
 ---
 
+## Task 7b: Restyle to the Isometric Datacenter look (owner-chosen, added after Task 7)
+
+Not in the original plan: the owner reviewed the running game and the four demos and chose option C (isometric). Spec §7 was amended accordingly. Brief lives at `.superpowers/sdd/2026-09-30-cloud-crew-on-call/task-7b-brief.md` (controller-written; the text there is the requirement). Files: `crew/scene.js` (internals rewritten, API and node keys unchanged), `crew/style.css`, `crew/index.html`, `crew/ui.js`, `crew/content.js` (clue wording), remove `crew/fonts/Fredoka.ttf` and its `@font-face`. Verification: crew-smoke (pro/wrong at 360×640, 390×844, 1280×800), crew-menu, `npm run check`.
+
+---
+
 ## Task 8: Sound, haptics, shake, coins (all failure-safe)
 
 **Files:**
