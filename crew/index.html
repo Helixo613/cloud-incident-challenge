@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1230">
+  <title>Cloud Crew: On-Call</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2726%27 font-size=%2726%27%3E%E2%98%81%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <section id="screen-title" class="screen is-active">
+    <div class="panel center">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 120 84" width="120" height="84"><path d="M30 76a24 24 0 0 1-2-47 30 30 0 0 1 57-4 26 26 0 0 1 7 51z" fill="#f6f4ff" stroke="#05081c" stroke-width="5" stroke-linejoin="round"/><path d="M36 60a14 14 0 0 1 8-13" fill="none" stroke="#c9d0ff" stroke-width="5" stroke-linecap="round"/><circle cx="46" cy="56" r="5" fill="#05081c"/><circle cx="74" cy="56" r="5" fill="#05081c"/><path d="M52 66q9 7 16 0" fill="none" stroke="#05081c" stroke-width="4" stroke-linecap="round"/></svg></div>
+      <h1>CLOUD <span>CREW</span></h1>
+      <p class="tag">On-Call</p>
+      <p class="lede">Your app is live. Things will break. Keep the crew calm.</p>
+      <button class="btn go" data-nav="start">Start shift</button>
+      <button class="btn ghost" data-nav="mute" id="btn-mute-title">🔊 Sound on</button>
+    </div>
+  </section>
+
+  <section id="screen-howto" class="screen">
+    <div class="panel">
+      <h2>How a shift works</h2>
+      <ol class="steps">
+        <li><b>1</b><div><strong>Prep</strong>Spend your budget on servers and safety gear.</div></li>
+        <li><b>2</b><div><strong>Incident</strong>Something breaks! Tap the crew to hear what's wrong.</div></li>
+        <li><b>3</b><div><strong>Diagnose &amp; fix</strong>Name the cause, then pick a fix. Wrong fixes cost you.</div></li>
+      </ol>
+      <p class="lede small">5 rounds · about 10 minutes · earn up to 15 stars.</p>
+      <button class="btn go" data-nav="play">Let's go</button>
+    </div>
+  </section>
+
+  <section id="screen-play" class="screen">
+    <header id="hud">
+      <div class="pill gold" id="hud-budget">$120</div>
+      <div id="hud-avail"><span id="hud-meter" class="meter"><i></i></span><b id="hud-avail-num">100%</b></div>
+      <div class="pill" id="hud-round">Round 1/5</div>
+      <button class="icon-btn" data-nav="menu" aria-label="Menu">☰</button>
+    </header>
+    <div id="stage">
+      <svg id="scene" viewBox="0 0 360 400" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Your app's crew"></svg>
+      <div id="bubble" hidden></div>
+      <div id="ticker">All quiet…</div>
+      <div id="coach" hidden></div>
+      <div id="banner" hidden></div>
+    </div>
+    <div id="sheet" data-phase="prep">
+      <div id="sheet-title"></div>
+      <div id="sheet-body"></div>
+      <div id="sheet-foot"></div>
+    </div>
+  </section>
+
+  <section id="screen-result" class="screen">
+    <div class="panel">
+      <p class="kicker" id="result-kicker"></p>
+      <h2 id="result-title"></h2>
+      <ul id="result-stars" class="stars"></ul>
+      <div id="result-body" class="story"></div>
+      <p id="result-money" class="money"></p>
+      <button class="btn go" data-nav="next">Next round</button>
+    </div>
+  </section>
+
+  <section id="screen-final" class="screen">
+    <div class="panel center">
+      <p class="kicker">Shift complete</p>
+      <div id="final-grade" class="grade">A</div>
+      <p id="final-summary" class="lede small"></p>
+      <ul id="final-rounds" class="rounds"></ul>
+      <p class="seed">Seed <b id="final-seed"></b></p>
+      <button class="btn go" data-nav="copy" id="btn-copy">Copy result</button>
+      <button class="btn" data-nav="again">Play again</button>
+      <a class="btn ghost" href="../">Try the 3D sandbox</a>
+    </div>
+  </section>
+
+  <div id="menu" class="modal" hidden>
+    <div class="panel center">
+      <h2>Paused</h2>
+      <button class="btn go" data-nav="resume">Resume</button>
+      <button class="btn" data-nav="restart">Restart shift</button>
+      <button class="btn ghost" data-nav="mute" id="btn-mute">🔊 Sound on</button>
+      <button class="btn ghost" data-nav="home">Quit to title</button>
+    </div>
+  </div>
+</main>
+<script type="module" src="main.js"></script>
+</body>
+</html>
